@@ -1,0 +1,6 @@
+
+{
+  "name": "HDFC AI-Loan Predictor",
+  "description": "An intelligent loan approval system for HDFC Bank utilizing Gemini AI to analyze creditworthiness, financial history, and risk patterns for instant decision-making.",
+  "requestFramePermissions": []
+}

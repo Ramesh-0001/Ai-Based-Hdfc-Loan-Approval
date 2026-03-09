@@ -1,7 +1,8 @@
+import { API_BASE_URL } from '../src/config/api';
 
 export class GeminiService {
     constructor() {
-        this.apiBaseUrl = 'http://localhost:5001';
+        this.apiBaseUrl = API_BASE_URL;
     }
 
     async predictLoanEligibility(application) {

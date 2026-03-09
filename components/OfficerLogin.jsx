@@ -8,6 +8,7 @@ const OfficerLogin = ({ onLogin, isDark }) => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -15,7 +16,7 @@ const OfficerLogin = ({ onLogin, isDark }) => {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:5001/api/login/officer', {
+            const response = await fetch(`${API_BASE_URL}/api/login/officer`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ empId, password })
@@ -25,7 +26,7 @@ const OfficerLogin = ({ onLogin, isDark }) => {
 
             if (data.success) {
                 onLogin(data.user);
-                navigate('/');
+                navigate('/dashboard');
             } else {
                 setError(data.message || 'Invalid Employee ID or Password');
             }
@@ -76,7 +77,7 @@ const OfficerLogin = ({ onLogin, isDark }) => {
                                     required
                                     className={`w-full px-6 py-4 rounded-2xl outline-none border-2 transition-all font-bold ${isDark ? 'bg-slate-950 border-slate-800 text-white focus:border-green-500' : 'bg-gray-50 border-gray-100 focus:border-green-600'
                                         }`}
-                                    placeholder="HDFC_EMP_000"
+                                    placeholder="e.g. rameshkannan"
                                     value={empId}
                                     onChange={(e) => setEmpId(e.target.value)}
                                 />

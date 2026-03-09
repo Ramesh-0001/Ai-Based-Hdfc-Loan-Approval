@@ -21,7 +21,7 @@ const CustomerEntry = ({ onLogin, isDark }) => {
                 email: email || 'guest@hdfc.com',
                 role: 'APPLICANT'
             });
-            navigate('/');
+            navigate('/dashboard');
         }, 1000);
     };
 
@@ -31,9 +31,10 @@ const CustomerEntry = ({ onLogin, isDark }) => {
             onLogin({
                 id: 999,
                 name: 'Guest Applicant',
-                role: 'APPLICANT'
+                role: 'APPLICANT',
+                isGuest: true
             });
-            navigate('/');
+            navigate('/dashboard');
         }, 800);
     };
 

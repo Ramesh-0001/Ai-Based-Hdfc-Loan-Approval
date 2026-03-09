@@ -1,509 +1,322 @@
 """
-Risk Scoring Engine for Loan Approval System
-Implements multi-factor risk scoring algorithm (0-100 scale)
+Risk Scoring Engine for HDFC AI Loan Approval System
+Implements a 100-point multi-factor scoring model following real banking rules.
+
+Scoring Weights:
+  Credit Score       → 30 points
+  Loan-to-Income     → 25 points
+  Income Stability   → 15 points
+  Debt-to-Income     → 20 points
+  Age & Stability    → 10 points
+                      ─────────
+  Total              → 100 points
+
+Decision Logic:
+  Score ≥ 70  → APPROVED
+  Score 50–69 → MANUAL_REVIEW
+  Score < 50  → REJECTED
+
+IMPORTANT: Income values in the database are ANNUAL (e.g. 900000 = ₹9 LPA).
+           All calculations convert to monthly where needed.
 """
 
-from typing import Dict, Any, Tuple
-from feature_schema import FeatureEngineer, LoanPurpose
+import math
+from typing import Dict, Any
 
 
 class RiskScorer:
     """
-    Calculate risk score (0-100) based on multiple factors
-    
-    Scoring Breakdown:
-    - Credit Score: 35 points
-    - Income Stability: 25 points
-    - Debt-to-Income Ratio: 20 points
-    - Loan-to-Income Ratio: 15 points
-    - Stability Factors: 5 points
+    Calculates a creditworthiness score (0-100) based on realistic HDFC-style
+    banking rules using a weighted multi-factor model.
     """
-    
-    def __init__(self):
-        self.engineer = FeatureEngineer()
-    
-    def score_credit(self, credit_score: int) -> float:
-        """
-        Score based on credit score (0-35 points)
-        
-        Tiers:
-        - 750+: 35 points (Excellent)
-        - 700-749: 28 points (Good)
-        - 650-699: 20 points (Fair)
-        - 600-649: 12 points (Poor)
-        - <600: 5 points (Very Poor)
-        """
-        if credit_score >= 750:
-            return 35.0
-        elif credit_score >= 700:
-            return 28.0
-        elif credit_score >= 650:
-            return 20.0
-        elif credit_score >= 600:
-            return 12.0
-        else:
-            return 5.0
-    
-    def score_income_stability(self, employment_type: str, 
-                               years_in_job: float,
-                               total_experience: float,
-                               annual_income: float) -> float:
-        """
-        Score based on income stability (0-25 points)
-        
-        Factors:
-        - Employment type base score
-        - Job tenure multiplier
-        - Income level bonus
-        """
-        # Base score by employment type
-        type_scores = {
-            "Government": 15,
-            "Salaried": 12,
-            "Self-Employed": 10,
-            "Freelancer": 7
-        }
-        base_score = type_scores.get(employment_type, 8)
-        
-        # Job tenure multiplier
-        if years_in_job >= 5:
-            tenure_multiplier = 1.3
-        elif years_in_job >= 3:
-            tenure_multiplier = 1.2
-        elif years_in_job >= 2:
-            tenure_multiplier = 1.0
-        elif years_in_job >= 1:
-            tenure_multiplier = 0.8
-        else:
-            tenure_multiplier = 0.6
-        
-        # Experience bonus (max 3 points)
-        experience_bonus = min(total_experience / 5, 3.0)
-        
-        # Income level bonus (max 2 points)
-        if annual_income >= 2000000:  # 20 lakhs+
-            income_bonus = 2.0
-        elif annual_income >= 1000000:  # 10 lakhs+
-            income_bonus = 1.5
-        elif annual_income >= 600000:  # 6 lakhs+
-            income_bonus = 1.0
-        else:
-            income_bonus = 0.5
-        
-        score = (base_score * tenure_multiplier) + experience_bonus + income_bonus
-        return min(score, 25.0)
-    
-    def score_dti_ratio(self, dti_ratio: float) -> float:
-        """
-        Score based on Debt-to-Income ratio (0-20 points)
-        
-        Lower DTI = Better score
-        - DTI ≤ 20%: 20 points (Excellent)
-        - DTI 21-30%: 18 points (Very Good)
-        - DTI 31-40%: 15 points (Good)
-        - DTI 41-50%: 10 points (Fair)
-        - DTI 51-60%: 5 points (Poor)
-        - DTI > 60%: 2 points (Very Poor)
-        """
-        if dti_ratio <= 20:
-            return 20.0
-        elif dti_ratio <= 30:
-            return 18.0
-        elif dti_ratio <= 40:
-            return 15.0
-        elif dti_ratio <= 50:
-            return 10.0
-        elif dti_ratio <= 60:
-            return 5.0
-        else:
-            return 2.0
-    
-    def score_loan_to_income(self, lti_ratio: float, 
-                            loan_purpose: str) -> float:
-        """
-        Score based on Loan-to-Income ratio (0-15 points)
-        
-        Adjusted by loan purpose (home loans allow higher LTI)
-        """
-        # Base score by LTI
-        if lti_ratio <= 1:
-            base_score = 15.0
-        elif lti_ratio <= 2:
-            base_score = 13.0
-        elif lti_ratio <= 3:
-            base_score = 11.0
-        elif lti_ratio <= 4:
-            base_score = 8.0
-        elif lti_ratio <= 5:
-            base_score = 5.0
-        elif lti_ratio <= 6:
-            base_score = 3.0
-        else:
-            base_score = 1.0
-        
-        # Purpose adjustment
-        if loan_purpose == "Home" and lti_ratio <= 5:
-            # Home loans allow higher LTI
-            base_score = min(base_score + 2, 15.0)
-        elif loan_purpose == "Education" and lti_ratio <= 3:
-            # Education loans get slight bonus
-            base_score = min(base_score + 1, 15.0)
-        elif loan_purpose == "Personal" and lti_ratio > 3:
-            # Personal loans penalized for high LTI
-            base_score = max(base_score - 2, 1.0)
-        
-        return base_score
-    
-    def score_stability_factors(self, residential_status: str,
-                                city_tier: str,
-                                education_level: str,
-                                dependents: int,
-                                existing_loan_count: int,
-                                bank_vintage_months: int) -> float:
-        """
-        Score based on stability factors (0-5 points)
-        
-        Factors:
-        - Residential status
-        - City tier
-        - Education level
-        - Number of dependents
-        - Existing loan count
-        - Bank account vintage
-        """
-        score = 0.0
-        
-        # Residential status (0-1 point)
-        residential_scores = {
-            "Owned": 1.0,
-            "Family-Owned": 0.8,
-            "Company-Provided": 0.6,
-            "Rented": 0.4
-        }
-        score += residential_scores.get(residential_status, 0.5)
-        
-        # City tier (0-1 point)
-        city_scores = {
-            "Metro": 1.0,
-            "Tier-1": 0.8,
-            "Tier-2": 0.6,
-            "Tier-3": 0.4
-        }
-        score += city_scores.get(city_tier, 0.5)
-        
-        # Education level (0-1 point)
-        education_scores = {
-            "Professional": 1.0,
-            "Post-Graduate": 0.9,
-            "Graduate": 0.7,
-            "High-School": 0.4
-        }
-        score += education_scores.get(education_level, 0.5)
-        
-        # Dependents (0-1 point) - fewer is better
-        if dependents == 0:
-            score += 1.0
-        elif dependents <= 2:
-            score += 0.7
-        elif dependents <= 4:
-            score += 0.4
-        else:
-            score += 0.2
-        
-        # Existing loan count (0-0.5 point) - fewer is better
-        if existing_loan_count == 0:
-            score += 0.5
-        elif existing_loan_count <= 2:
-            score += 0.3
-        else:
-            score += 0.1
-        
-        # Bank vintage (0-0.5 point)
-        if bank_vintage_months >= 60:  # 5+ years
-            score += 0.5
-        elif bank_vintage_months >= 36:  # 3+ years
-            score += 0.4
-        elif bank_vintage_months >= 24:  # 2+ years
-            score += 0.3
-        elif bank_vintage_months >= 12:  # 1+ year
-            score += 0.2
-        else:
-            score += 0.1
-        
-        return min(score, 5.0)
-    
-    def apply_loan_purpose_adjustment(self, base_score: float, 
-                                     loan_purpose: str,
-                                     features: Dict[str, Any]) -> float:
-        """
-        Apply loan purpose-specific adjustments
-        
-        - Home Loan: +3 bonus (lower risk, collateral)
-        - Education Loan: +2 bonus (investment in future)
-        - Vehicle Loan: +1 bonus (depreciating asset)
-        - Medical Loan: 0 (neutral)
-        - Personal Loan: -2 penalty (higher risk)
-        - Business Loan: Special rules
-        """
-        adjustment = 0.0
-        
-        if loan_purpose == "Home":
-            adjustment = 3.0
-        elif loan_purpose == "Education":
-            adjustment = 2.0
-        elif loan_purpose == "Vehicle":
-            adjustment = 1.0
-        elif loan_purpose == "Medical":
-            adjustment = 0.0
-        elif loan_purpose == "Personal":
-            adjustment = -2.0
-        elif loan_purpose == "Business":
-            # Business loans require minimum experience
-            if features.get('employment_type') == 'Self-Employed':
-                if features.get('years_in_current_job', 0) >= 3:
-                    adjustment = 1.0
-                else:
-                    adjustment = -5.0  # Penalty for new business
-            else:
-                adjustment = -3.0  # Not self-employed seeking business loan
-        
-        return base_score + adjustment
-    
-    def calculate_risk_score(self, features: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Calculate comprehensive Creditworthiness Score (0-100)
-        Note: 100 is best (Low Risk), 0 is worst (High Risk)
-        
-        Tiers:
-        - 71-100: Low Risk (Strong Applicant)
-        - 41-70: Medium Risk (Standard Profile)
-        - 0-40: High Risk (Weak Profile)
-        """
-        # Edge Case: Zero or Negative Income
-        if features.get('annual_income', 0) <= 0:
-            return {
-                'creditworthiness_score': 0,
-                'approval_status': 'REJECTED',
-                'risk_tier': 'High Risk',
-                'score_breakdown': {},
-                'reasoning': ["[CRITICAL] Invalid Income: Income must be greater than zero."]
-            }
 
-        # Calculate derived features
-        derived = self.engineer.get_all_derived_features(features)
-        
-        # Calculate component scores (higher is better)
-        credit_score_points = self.score_credit(features['credit_score'])
-        income_stability_points = self.score_income_stability(
-            features['employment_type'],
-            features['years_in_current_job'],
-            features['total_work_experience'],
-            features['annual_income']
-        )
-        dti_points = self.score_dti_ratio(derived['dti_ratio'])
-        lti_points = self.score_loan_to_income(
-            derived['loan_to_income_ratio'],
-            features['loan_purpose']
-        )
-        stability_points = self.score_stability_factors(
-            features['residential_status'],
-            features['city_tier'],
-            features['education_level'],
-            features['number_of_dependents'],
-            features['existing_loan_count'],
-            features['bank_account_vintage_months']
-        )
-        
-        # Total Creditworthiness Score (0-100, higher is better)
-        base_score = (
-            credit_score_points +
-            income_stability_points +
-            dti_points +
-            lti_points +
-            stability_points
-        )
-        
-        # Age-based risk (Requirement 2: Edge conditions e.g., age < 21)
-        age_penalty = 0
-        if features.get('age', 0) < 21:
-            age_penalty = 15
-            base_score -= age_penalty
-        
-        # Apply loan purpose adjustment
-        final_score = self.apply_loan_purpose_adjustment(
-            base_score,
-            features['loan_purpose'],
-            features
-        )
-        
-        # Ensure score is within 0-100
-        final_score = max(0, min(100, final_score))
-        
-        # Determine approval status and risk level
-        if final_score >= 71:
-            approval_status = "APPROVED"
-            risk_level = "Low"
-            risk_category = "Low Risk / Strong Profile"
-        elif final_score >= 41:
-            approval_status = "MANUAL_REVIEW"
-            risk_level = "Medium"
-            risk_category = "Medium Risk / Standard Profile"
+    # ── Standard EMI Formula ────────────────────────────────────────────────
+    @staticmethod
+    def _calculate_emi(principal: float, annual_rate: float = 10.0, tenure_months: int = 60) -> float:
+        """
+        EMI = [P × R × (1+R)^N] / [(1+R)^N – 1]
+        P = principal, R = monthly rate, N = tenure in months
+        Default: 10% interest, 60 months tenure
+        """
+        if principal <= 0 or tenure_months <= 0:
+            return 0.0
+        r = (annual_rate / 100) / 12
+        n = tenure_months
+        try:
+            emi = (principal * r * math.pow(1 + r, n)) / (math.pow(1 + r, n) - 1)
+            return round(emi, 2)
+        except (ZeroDivisionError, OverflowError):
+            return 0.0
+
+    # ── Main Scoring Method ─────────────────────────────────────────────────
+    def calculate_risk_score(self, features: Dict[str, Any]) -> Dict[str, Any]:
+        # ── Extract Input Features ──────────────────────────────────────────
+        annual_income   = float(features.get('annual_income', 0))
+        loan_amount     = float(features.get('loan_amount', 0))
+        credit_score    = int(features.get('credit_score', 0))
+        existing_emi    = float(features.get('monthly_existing_emis', 0))
+        emp_type        = features.get('employment_type', '')
+        tenure          = int(features.get('loan_tenure_months', 60))
+        age             = int(features.get('age', 30))
+        years_in_job    = float(features.get('years_in_current_job', 0))
+
+        if tenure <= 0:
+            tenure = 60  # Default 5-year tenure
+
+        monthly_income = annual_income / 12 if annual_income > 0 else 0
+        reasons = []
+        score_breakdown = {}
+
+        # ════════════════════════════════════════════════════════════════════
+        # 1. CREDIT SCORE  (Max 30 points)
+        # ════════════════════════════════════════════════════════════════════
+        if credit_score >= 750:
+            credit_pts = 30
+            reasons.append(f"Excellent Credit Score ({credit_score}) — 750+ is premium tier.")
+        elif credit_score >= 700:
+            credit_pts = 24
+            reasons.append(f"Good Credit Score ({credit_score}) — within the 700-749 healthy range.")
+        elif credit_score >= 650:
+            credit_pts = 15
+            reasons.append(f"Average Credit Score ({credit_score}) — room for improvement.")
         else:
-            approval_status = "REJECTED"
+            credit_pts = 5
+            reasons.append(f"Risky Credit Score ({credit_score}) — below 650 is considered high risk.")
+        score_breakdown['credit_score'] = credit_pts
+
+        # ════════════════════════════════════════════════════════════════════
+        # 2. LOAN-TO-INCOME RATIO (LTI)  (Max 25 points)
+        #    Formula: loan_amount / annual_income
+        #    ≤ 2 → Very Safe | 2-4 → Medium | > 4 → High Risk
+        # ════════════════════════════════════════════════════════════════════
+        if annual_income > 0:
+            lti = loan_amount / annual_income
+        else:
+            lti = 999.0
+
+        if lti <= 2:
+            lti_pts = 25
+            reasons.append(f"Very Safe Loan-to-Income ratio ({lti:.2f}x) — well within 2x limit.")
+        elif lti <= 4:
+            # Proportional scoring between 2-4
+            lti_pts = max(10, round(25 - (lti - 2) * 7.5))
+            reasons.append(f"Moderate Loan-to-Income ratio ({lti:.2f}x) — within acceptable 2-4x range.")
+        else:
+            lti_pts = 0
+            reasons.append(f"High Risk Loan-to-Income ratio ({lti:.2f}x) — exceeds 4x limit.")
+        score_breakdown['loan_to_income'] = lti_pts
+
+        # ════════════════════════════════════════════════════════════════════
+        # 3. INCOME STABILITY  (Max 15 points)
+        #    Based on employment type + years in current job
+        # ════════════════════════════════════════════════════════════════════
+        income_pts = 0
+        if emp_type in ('Salaried', 'Government'):
+            income_pts += 10
+            reasons.append(f"Stable {emp_type} employment — preferred by lenders.")
+        elif emp_type in ('Self-Employed', 'Business'):
+            income_pts += 6
+            reasons.append(f"{emp_type} income — moderate stability.")
+        else:
+            income_pts += 3
+            if emp_type:
+                reasons.append(f"{emp_type} employment — limited stability factor.")
+
+        # Job tenure bonus
+        if years_in_job >= 3:
+            income_pts += 5
+        elif years_in_job >= 1:
+            income_pts += 3
+        else:
+            income_pts += 0
+
+        income_pts = min(15, income_pts)
+        score_breakdown['income_stability'] = income_pts
+
+        # ════════════════════════════════════════════════════════════════════
+        # 4. DEBT-TO-INCOME RATIO (DTI)  (Max 20 points)
+        #    Formula: total_existing_emi / monthly_income * 100
+        #    < 30% → Safe | 30-40% → Moderate | > 40% → High Risk
+        #    NOTE: We use EXISTING EMIs only (not proposed new EMI) for DTI
+        # ════════════════════════════════════════════════════════════════════
+        if monthly_income > 0:
+            dti_pct = (existing_emi / monthly_income) * 100
+        else:
+            dti_pct = 100.0
+
+        if dti_pct < 30:
+            dti_pts = 20
+            reasons.append(f"Safe existing DTI ratio ({dti_pct:.1f}%) — well below 30% threshold.")
+        elif dti_pct <= 40:
+            dti_pts = 12
+            reasons.append(f"Moderate DTI ratio ({dti_pct:.1f}%) — in the 30-40% caution zone.")
+        else:
+            dti_pts = 4
+            reasons.append(f"High DTI ratio ({dti_pct:.1f}%) — exceeds 40% limit, debt burden is heavy.")
+        score_breakdown['debt_to_income'] = dti_pts
+
+        # ════════════════════════════════════════════════════════════════════
+        # 5. AGE & STABILITY  (Max 10 points)
+        # ════════════════════════════════════════════════════════════════════
+        if 25 <= age <= 55:
+            age_pts = 10
+        elif 21 <= age < 25 or 55 < age <= 60:
+            age_pts = 6
+        elif 18 <= age < 21 or 60 < age <= 65:
+            age_pts = 3
+        else:
+            age_pts = 0
+        score_breakdown['age_stability'] = age_pts
+
+        # ════════════════════════════════════════════════════════════════════
+        # FINAL SCORE CALCULATION
+        # ════════════════════════════════════════════════════════════════════
+        raw_score = credit_pts + lti_pts + income_pts + dti_pts + age_pts
+        final_score = max(0, min(100, raw_score))
+
+        # ── Decision Logic ──────────────────────────────────────────────────
+        if final_score >= 70:
+            prediction = "APPROVED"
+            risk_level = "Low"
+        elif final_score >= 50:
+            prediction = "REVIEW"
+            risk_level = "Medium"
+        else:
+            prediction = "REJECTED"
             risk_level = "High"
-            risk_category = "High Risk Profile"
-        
-        # Generate reasoning
-        reasoning = self._generate_reasoning(
-            final_score,
-            credit_score_points,
-            income_stability_points,
-            dti_points,
-            lti_points,
-            stability_points,
-            features,
-            derived
-        )
-        
-        if age_penalty > 0:
-            reasoning.insert(0, f"[RISK] Age Condition: Applicant is under 21, posing higher entry-level risk.")
+
+        # ── EMI & Affordability Calculations ────────────────────────────────
+        proposed_emi = self._calculate_emi(loan_amount, 10.0, tenure)
+        total_emi_after_loan = existing_emi + proposed_emi
+        foir = (total_emi_after_loan / monthly_income * 100) if monthly_income > 0 else 100
+
+        # ── Maximum Loan Eligibility ────────────────────────────────────────
+        max_loan = annual_income * 4  # Standard banking rule
+
+        # ── Smart Recommendation ────────────────────────────────────────────
+        if loan_amount <= max_loan and final_score >= 70:
+            income_lakhs = round(annual_income / 100000, 1)
+            loan_lakhs = round(loan_amount / 100000, 1)
+            recommendation = (
+                f"Based on your ₹{income_lakhs}L annual income and strong credit profile, "
+                f"your requested ₹{loan_lakhs}L loan falls within safe eligibility limits."
+            )
+        elif loan_amount <= max_loan:
+            max_lakhs = round(max_loan / 100000, 1)
+            recommendation = (
+                f"Your maximum safe loan eligibility is approximately ₹{max_lakhs}L. "
+                f"Your requested amount is within range, but other factors need improvement."
+            )
+        else:
+            max_lakhs = round(max_loan / 100000, 1)
+            recommendation = (
+                f"Your maximum safe loan eligibility is approximately ₹{max_lakhs}L (4x annual income). "
+                f"Consider reducing your loan request or increasing income sources."
+            )
 
         return {
-            'creditworthiness_score': round(final_score, 2),
+            'creditworthiness_score': final_score,
+            'approval_status': prediction,
             'risk_level': risk_level,
-            'approval_status': approval_status,
-            'risk_tier': risk_category,
+            'risk_tier': f"{risk_level} Risk",
+            'reasoning': reasons,
+            'prediction': prediction,
+            'score': final_score,
+            'reason': reasons,
+            'recommendation': recommendation,
+            'max_loan_eligibility': max_loan,
             'score_breakdown': {
-                'Credit Score Impact': round(credit_score_points, 2),
-                'Income Stability Impact': round(income_stability_points, 2),
-                'Repayment Capacity (DTI) Impact': round(dti_points, 2),
-                'Loan-to-Income Impact': round(lti_points, 2),
-                'Stability Factors Impact': round(stability_points, 2),
-                'Age Penalty': -age_penalty if age_penalty > 0 else 0
+                'credit_score': f"{credit_pts}/30",
+                'loan_to_income': f"{lti_pts}/25",
+                'income_stability': f"{income_pts}/15",
+                'debt_to_income': f"{dti_pts}/20",
+                'age_stability': f"{age_pts}/10",
+                'total': f"{final_score}/100"
             },
-            'derived_features': derived,
-            'reasoning': reasoning
+            'derived_features': {
+                'monthly_income': round(monthly_income, 2),
+                'loan_to_income_ratio': round(lti, 2),
+                'dti_ratio': round(dti_pct, 2),
+                'proposed_emi': proposed_emi,
+                'total_emi_after_loan': round(total_emi_after_loan, 2),
+                'foir_pct': round(foir, 2),
+                'max_loan_eligibility': max_loan
+            }
         }
-    
-    def _generate_reasoning(self, credit_score_final: float,
-                           credit_pts: float,
-                           income_pts: float,
-                           dti_pts: float,
-                           lti_pts: float,
-                           stability_pts: float,
-                           features: Dict[str, Any],
-                           derived: Dict[str, Any]) -> list:
-        """Generate professional banking-grade reasoning for the score"""
-        reasoning = []
-        
-        # Credit Score Evaluation
-        if credit_pts >= 28:
-            reasoning.append(f"• Excellent Credit Profile: Your score of {features['credit_score']} shows high reliability and disciplined repayment history.")
-        elif credit_pts >= 20:
-            reasoning.append(f"• Fair Credit Profile: Your score of {features['credit_score']} is acceptable, but improving it beyond 750 would unlock better rates.")
-        else:
-            reasoning.append(f"• Low Credit Score: Your score of {features['credit_score']} indicates high historical credit risk, which is a primary concern for approval.")
-            
-        # Income Level
-        income = features.get('annual_income', 0)
-        if income >= 1500000:
-            reasoning.append(f"• High Income Level: Annual income of ₹{income:,} provides a strong buffer for loan servicing.")
-        elif income >= 600000:
-            reasoning.append(f"• Stable Income Level: Annual income of ₹{income:,} is adequate for standard loan products.")
-        else:
-            reasoning.append(f"• Limited Monthly Cashflow: Current annual income of ₹{income:,} may restrict high-value loan eligibility.")
-
-        # LTI Ratio
-        lti = derived.get('loan_to_income_ratio', 0)
-        if lti <= 2.0:
-            reasoning.append(f"• Healthy Loan-to-Income: Requested loan is less than 2x your annual earnings, indicating low leverage.")
-        elif lti <= 4.0:
-            reasoning.append(f"• Moderate Leverage: Your loan-to-income ratio ({lti}) is within manageable banking limits.")
-        else:
-            reasoning.append(f"• High Leverage Warning: Loan amount is {lti}x your income, which exceeds standard safety thresholds.")
-
-        # DTI Ratio
-        dti = derived.get('dti_ratio', 0)
-        if dti <= 30:
-            reasoning.append(f"• Strong Repayment Capacity: Monthly debt obligations consume only {dti}% of your income.")
-        elif dti <= 50:
-            reasoning.append(f"• Strained Cashflow: Your Debt-to-Income ratio ({dti}%) suggests limited room for additional financial stress.")
-        else:
-            reasoning.append(f"• Critical Debt Burden: Total EMIs consume {dti}% of your monthly income, posing a significant default risk.")
-
-        return reasoning
 
 
+# ── Demo / Self-Test ────────────────────────────────────────────────────────
 def demo_risk_scoring():
-    """Demonstrate risk scoring with sample applicants"""
+    """Test with the user's exact scenario: ₹9L income, ₹13L loan"""
     scorer = RiskScorer()
-    
-    # Sample 1: Strong applicant
-    strong_applicant = {
-        'age': 35,
-        'annual_income': 1200000,
-        'credit_score': 780,
-        'employment_type': 'Government',
-        'loan_amount': 2000000,
-        'monthly_existing_emis': 15000,
-        'loan_purpose': 'Home',
-        'loan_tenure_months': 240,
-        'years_in_current_job': 8,
-        'total_work_experience': 12,
-        'existing_loan_count': 1,
-        'residential_status': 'Owned',
-        'number_of_dependents': 2,
-        'city_tier': 'Metro',
-        'education_level': 'Post-Graduate',
-        'marital_status': 'Married',
-        'bank_account_vintage_months': 96
-    }
-    
-    # Sample 2: Weak applicant
-    weak_applicant = {
-        'age': 28,
-        'annual_income': 400000,
-        'credit_score': 620,
-        'employment_type': 'Freelancer',
-        'loan_amount': 1500000,
-        'monthly_existing_emis': 12000,
-        'loan_purpose': 'Personal',
-        'loan_tenure_months': 60,
-        'years_in_current_job': 0.5,
-        'total_work_experience': 3,
-        'existing_loan_count': 3,
-        'residential_status': 'Rented',
-        'number_of_dependents': 1,
-        'city_tier': 'Tier-2',
-        'education_level': 'Graduate',
-        'marital_status': 'Single',
-        'bank_account_vintage_months': 18
-    }
-    
+
+    test_cases = [
+        {
+            'name': 'Safe Profile (₹9L income, ₹13L loan)',
+            'data': {
+                'annual_income': 900000,
+                'loan_amount': 1300000,
+                'credit_score': 750,
+                'employment_type': 'Salaried',
+                'monthly_existing_emis': 0,
+                'loan_tenure_months': 60,
+                'age': 32,
+                'years_in_current_job': 4
+            }
+        },
+        {
+            'name': 'Moderate Profile (₹6L income, ₹20L loan)',
+            'data': {
+                'annual_income': 600000,
+                'loan_amount': 2000000,
+                'credit_score': 710,
+                'employment_type': 'Self-Employed',
+                'monthly_existing_emis': 8000,
+                'loan_tenure_months': 60,
+                'age': 35,
+                'years_in_current_job': 2
+            }
+        },
+        {
+            'name': 'Risky Profile (₹3L income, ₹15L loan)',
+            'data': {
+                'annual_income': 300000,
+                'loan_amount': 1500000,
+                'credit_score': 620,
+                'employment_type': 'Freelancer',
+                'monthly_existing_emis': 10000,
+                'loan_tenure_months': 60,
+                'age': 23,
+                'years_in_current_job': 0
+            }
+        }
+    ]
+
     print("=" * 70)
-    print("RISK SCORING DEMONSTRATION")
+    print("HDFC AI RISK SCORING ENGINE — TEST RESULTS")
     print("=" * 70)
-    
-    for i, applicant in enumerate([strong_applicant, weak_applicant], 1):
-        print(f"\n{'APPLICANT ' + str(i):=^70}")
-        result = scorer.calculate_risk_score(applicant)
-        
-        print(f"\nRisk Score: {result['risk_score']}/100")
-        print(f"Decision: {result['approval_status']}")
-        
-        print("\nScore Breakdown:")
-        for component, score in result['score_breakdown'].items():
-            print(f"  {component.replace('_', ' ').title()}: {score}")
-        
-        print("\nKey Metrics:")
-        for metric, value in result['derived_features'].items():
-            if metric not in ['monthly_income', 'proposed_emi']:
-                print(f"  {metric.replace('_', ' ').title()}: {value}")
-        
-        print("\nReasoning:")
-        for reason in result['reasoning']:
-            print(f"  {reason}")
-    
+
+    for tc in test_cases:
+        result = scorer.calculate_risk_score(tc['data'])
+        print(f"\n{'─' * 70}")
+        print(f"  {tc['name']}")
+        print(f"{'─' * 70}")
+        print(f"  Score: {result['creditworthiness_score']}/100")
+        print(f"  Decision: {result['approval_status']}")
+        print(f"  Risk Level: {result['risk_level']}")
+        print(f"\n  Score Breakdown:")
+        for k, v in result['score_breakdown'].items():
+            print(f"    {k.replace('_', ' ').title():.<30} {v}")
+        print(f"\n  Key Metrics:")
+        print(f"    LTI Ratio: {result['derived_features']['loan_to_income_ratio']}")
+        print(f"    DTI Ratio: {result['derived_features']['dti_ratio']}%")
+        print(f"    Proposed EMI: ₹{result['derived_features']['proposed_emi']:,.0f}")
+        print(f"    Max Loan Eligibility: ₹{result['max_loan_eligibility']:,.0f}")
+        print(f"\n  Recommendation: {result['recommendation']}")
+        print(f"\n  Reasoning:")
+        for r in result['reasoning']:
+            print(f"    • {r}")
+
     print("\n" + "=" * 70)
 
 

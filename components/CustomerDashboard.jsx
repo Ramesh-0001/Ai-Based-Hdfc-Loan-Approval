@@ -1,9 +1,17 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-const CustomerDashboard = ({ applications }) => {
+const CustomerDashboard = ({ user, applications, onLogout }) => {
+    const navigate = useNavigate();
     const [expandedAppId, setExpandedAppId] = useState(null);
+
+    const isGuest = user?.isGuest;
+
+    const handleSignIn = () => {
+        onLogout();
+        navigate('/login');
+    };
 
     const toggleExpand = (id) => {
         setExpandedAppId(expandedAppId === id ? null : id);
@@ -13,9 +21,18 @@ const CustomerDashboard = ({ applications }) => {
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#003d82] dark:text-blue-400">My Loan Applications</h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-1">Track your requests and get instant updates.</p>
+                    <h1 className="text-3xl font-bold text-[#003d82] dark:text-blue-400">
+                        {isGuest ? 'Guest Portal Preview' : 'My Loan Applications'}
+                    </h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">
+                        {isGuest ? 'You are viewing the dashboard as a guest. Please sign in to apply.' : 'Track your requests and get instant updates.'}
+                    </p>
                 </div>
+                {!isGuest && (
+                    <Link to="/apply" className="px-6 py-3 bg-[#e11b22] text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg hover:bg-red-700 transition-all active:scale-95">
+                        New Application
+                    </Link>
+                )}
             </div>
 
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700 overflow-hidden transition-colors duration-300">
@@ -27,8 +44,19 @@ const CustomerDashboard = ({ applications }) => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </div>
-                            <p className="text-gray-500 dark:text-gray-400 font-medium">You haven't submitted any applications yet.</p>
-                            <Link to="/apply" className="text-[#003d82] dark:text-blue-400 font-bold hover:underline transition-colors">Get started today</Link>
+                            <p className="text-gray-500 dark:text-gray-400 font-medium">
+                                {isGuest ? 'Application processing is disabled for guests.' : "You haven't submitted any applications yet."}
+                            </p>
+                            {isGuest ? (
+                                <button
+                                    onClick={handleSignIn}
+                                    className="inline-block px-8 py-3 bg-blue-600 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/20"
+                                >
+                                    Sign in to Apply
+                                </button>
+                            ) : (
+                                <Link to="/apply" className="text-[#003d82] dark:text-blue-400 font-bold hover:underline transition-colors">Get started today</Link>
+                            )}
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -73,7 +101,7 @@ const CustomerDashboard = ({ applications }) => {
                                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Risk Assessment</p>
                                                         <div className="flex items-center space-x-3">
                                                             <div className={`px-2 py-1 rounded text-[10px] font-bold ${app.aiCreditworthiness >= 71 ? 'bg-green-100 text-green-700' : app.aiCreditworthiness >= 41 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                                                                Score: {app.aiCreditworthiness}%
+                                                                Score: {app.aiCreditworthiness}
                                                             </div>
                                                             <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">
                                                                 {app.aiCreditworthiness >= 71 ? 'Low Risk' : app.aiCreditworthiness >= 41 ? 'Medium Risk' : 'High Risk'}
@@ -130,6 +158,26 @@ const CustomerDashboard = ({ applications }) => {
                                                             <span className="text-[10px] font-bold text-gray-400">RSA Verified</span>
                                                         </div>
                                                     </div>
+
+                                                    {app.status === 'APPROVED' && (
+                                                        <div className="mt-6 pt-4 border-t dark:border-slate-700">
+                                                            <div className="flex justify-between items-center mb-2">
+                                                                <p className="text-[10px] font-black text-[#003d82] dark:text-blue-400 uppercase">Monthly EMI Repayment</p>
+                                                                <p className="text-xs font-black text-green-600">₹{Math.round(app.emi || (app.loanAmount * 0.012)).toLocaleString()}</p>
+                                                            </div>
+                                                            <div className="bg-gray-50 dark:bg-slate-900 p-3 rounded-lg">
+                                                                <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest mb-1">Repayment Schedule</p>
+                                                                <div className="flex justify-between text-[10px] font-bold">
+                                                                    <span>Principal: 72%</span>
+                                                                    <span>Interest: 28%</span>
+                                                                </div>
+                                                                <div className="w-full h-1 bg-gray-200 rounded-full mt-1 overflow-hidden flex">
+                                                                    <div className="h-full bg-blue-600" style={{ width: '72%' }}></div>
+                                                                    <div className="h-full bg-amber-400" style={{ width: '28%' }}></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

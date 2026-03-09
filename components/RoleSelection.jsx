@@ -2,7 +2,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const RoleSelection = ({ isDark }) => {
+
+const RoleSelection = ({ isDark, user }) => {
     const navigate = useNavigate();
 
     const roles = [
@@ -47,6 +48,36 @@ const RoleSelection = ({ isDark }) => {
 
     return (
         <div className={`min-h-[80vh] flex flex-col items-center justify-center p-4`}>
+            {/* Quick Session Resume Button */}
+            {user && (
+                <div className="mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className={`flex items-center space-x-6 p-1.5 pr-8 rounded-full border-2 transition-all hover:scale-105 active:scale-95 group ${isDark
+                            ? 'bg-indigo-600/10 border-indigo-500/50 hover:bg-indigo-600/20'
+                            : 'bg-blue-50 border-blue-200 hover:bg-blue-100 shadow-xl shadow-blue-500/10'
+                            }`}
+                    >
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-xl shadow-lg ${isDark ? 'bg-indigo-500 text-white' : 'bg-white text-[#003d82]'
+                            }`}>
+                            {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="text-left">
+                            <p className={`text-[10px] font-black uppercase tracking-widest leading-none mb-1 ${isDark ? 'text-indigo-400' : 'text-blue-600'}`}>Session Active</p>
+                            <h3 className={`text-sm font-black tracking-tight ${isDark ? 'text-white' : 'text-[#003d82]'}`}>
+                                Continue as {user.name} <span className="ml-2 font-medium opacity-50">({user.role})</span>
+                            </h3>
+                        </div>
+                        <svg className="w-5 h-5 ml-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                    </button>
+                    <div className="mt-4 flex justify-center">
+                        <div className={`h-1 w-24 rounded-full ${isDark ? 'bg-slate-800' : 'bg-gray-100'}`}></div>
+                    </div>
+                </div>
+            )}
+
             <div className="text-center mb-12">
                 <h1 className={`text-4xl font-black mb-3 tracking-tight ${isDark ? 'text-white' : 'text-[#003d82]'}`}>
                     Secure Access Portal
@@ -62,8 +93,8 @@ const RoleSelection = ({ isDark }) => {
                         key={role.id}
                         onClick={() => navigate(role.path)}
                         className={`group p-8 rounded-[2.5rem] border-4 cursor-pointer transition-all hover:scale-105 active:scale-95 ${isDark
-                                ? 'bg-slate-900 border-slate-800 hover:border-indigo-500/50 hover:shadow-indigo-500/10'
-                                : 'bg-white border-gray-100 hover:border-blue-500/50 shadow-2xl hover:shadow-blue-500/20 shadow-gray-200/50'
+                            ? 'bg-slate-900 border-slate-800 hover:border-indigo-500/50 hover:shadow-indigo-500/10'
+                            : 'bg-white border-gray-100 hover:border-blue-500/50 shadow-2xl hover:shadow-blue-500/20 shadow-gray-200/50'
                             }`}
                     >
                         <div className={`w-20 h-20 rounded-3xl mb-6 flex items-center justify-center transition-transform group-hover:rotate-12 ${isDark ? 'bg-slate-800' : 'bg-gray-50'
@@ -95,5 +126,6 @@ const RoleSelection = ({ isDark }) => {
         </div>
     );
 };
+
 
 export default RoleSelection;

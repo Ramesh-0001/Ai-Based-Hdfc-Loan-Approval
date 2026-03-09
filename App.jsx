@@ -9,6 +9,7 @@ import ApplyLoan from './components/ApplyLoan';
 import EMICalculator from './components/EMICalculator';
 import EligibilityChecker from './components/EligibilityChecker';
 import TrackApplication from './components/TrackApplication';
+import Dashboard from './components/Dashboard';
 import RoleSelection from './components/RoleSelection';
 import CustomerEntry from './components/CustomerEntry';
 import OfficerLogin from './components/OfficerLogin';
@@ -20,6 +21,8 @@ const ProtectedRoute = ({ user, roles, children }) => {
     }
     return children;
 };
+
+import { API_BASE_URL } from './src/config/api';
 
 const App = () => {
     const [user, setUser] = useState(() => {
@@ -81,15 +84,31 @@ const App = () => {
         }
     };
 
-    const fetchApplications = async () => {
+    const fetchApplications = async (filters = {}) => {
         try {
-            const response = await fetch('http://localhost:5001/api/applications');
-            const data = await response.json();
-            if (Array.isArray(data)) {
-                setApplications(data);
+            const queryParams = new URLSearchParams();
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value && value !== 'ALL' && value !== 'all') {
+                    if (typeof value === 'object') {
+                        Object.entries(value).forEach(([subKey, subValue]) => {
+                            if (subValue) queryParams.append(`${key}_${subKey}`, subValue);
+                        });
+                    } else {
+                        queryParams.append(key, value);
+                    }
+                }
+            });
+
+            const url = `${API_BASE_URL}/api/applications${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+            const response = await fetch(url);
+            const result = await response.json();
+            if (Array.isArray(result)) {
+                setApplications(result);
+            } else if (result.success && Array.isArray(result.data)) {
+                setApplications(result.data);
             }
         } catch (err) {
-            console.error('Failed to fetch applications from SQL:', err);
+            console.error('Failed to fetch applications:', err);
         }
     };
 
@@ -107,13 +126,14 @@ const App = () => {
         let interval;
         if (user && (user.role === 'ADMIN' || user.role === 'OFFICER')) {
             fetchApplications();
-            // Poll for new applications every 15 seconds for snappier feels
-            interval = setInterval(fetchApplications, 15000);
+            // Poll for new applications every 8 seconds
+            interval = setInterval(fetchApplications, 8000);
         }
         return () => {
             if (interval) clearInterval(interval);
         };
     }, [user]);
+
 
     const handleLogout = () => {
         // Clear all state
@@ -143,22 +163,26 @@ const App = () => {
     };
 
     const addApplication = (app) => {
+        // loanAmount may come as a string from formData – normalise it
+        const loanAmtNum = parseFloat(app.loanAmount) || 0;
+        const appStatus = app.status || 'PENDING';
+
         setApplications(prev => [app, ...prev]);
 
         // 1. Notify Applicant
         createNotification({
             type: 'SUBMISSION',
-            message: `Loan application for ₹${app.loanAmount.toLocaleString()} submitted successfully (REF: ${app.id.toUpperCase()})`,
+            message: `Loan application for \u20b9${loanAmtNum.toLocaleString()} submitted successfully (REF: ${(app.id || '').toUpperCase()})`,
             targetRoles: ['CUSTOMER'],
             customerName: app.fullName,
             appId: app.id
         });
 
-        // 2. Notify Officers if requires review
-        if (app.status === 'PENDING') {
+        // 2. Notify Officers/Admin based on AI decision
+        if (appStatus === 'PENDING') {
             createNotification({
                 type: 'ASSIGNMENT',
-                message: `New Loan Application Received: ${app.fullName} (₹${app.loanAmount.toLocaleString()})`,
+                message: `New Loan Application Received: ${app.fullName} (\u20b9${loanAmtNum.toLocaleString()}) - Pending Review`,
                 targetRoles: ['OFFICER', 'ADMIN'],
                 appId: app.id
             });
@@ -167,22 +191,23 @@ const App = () => {
             if (app.aiCreditworthiness < 40) {
                 createNotification({
                     type: 'ALERT',
-                    message: `HIGH RISK ALERT: Application ${app.id.toUpperCase()} has a low AI Creditworthiness score (${app.aiCreditworthiness}%)`,
+                    message: `HIGH RISK ALERT: Application ${(app.id || '').toUpperCase()} has a low AI Creditworthiness score (${app.aiCreditworthiness}%)`,
                     targetRoles: ['OFFICER', 'ADMIN'],
                     appId: app.id
                 });
             }
         } else {
-            // AI Auto-decision (APPROVED or REJECTED)
+            // AI Auto-decision (APPROVED / REJECTED / MANUAL_REVIEW)
             createNotification({
-                type: app.status,
-                message: `AI System Decision: Loan ${app.status} for ${app.fullName} based on Risk Engine Profiling.`,
+                type: appStatus,
+                message: `AI System Decision: Loan ${appStatus} for ${app.fullName} based on Risk Engine Profiling.`,
                 targetRoles: ['CUSTOMER', 'OFFICER', 'ADMIN'],
                 customerName: app.fullName,
                 appId: app.id
             });
         }
     };
+
 
     const updateApplicationStatus = async (id, status, remark = '', officer = null) => {
         // Optimistic update
@@ -194,7 +219,7 @@ const App = () => {
         }));
 
         try {
-            const response = await fetch('http://localhost:5001/api/update-status', {
+            const response = await fetch(`${API_BASE_URL}/api/update-status`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id, status, remark, officer: officer?.name })
@@ -228,7 +253,7 @@ const App = () => {
     const deleteApplication = async (id) => {
         setApplications(prev => prev.filter(a => a.id !== id));
         try {
-            await fetch(`http://localhost:5001/api/delete-application?id=${id}`, { method: 'DELETE' });
+            await fetch(`${API_BASE_URL}/api/delete-application?id=${id}`, { method: 'DELETE' });
         } catch (err) {
             console.error('Failed to delete from SQL:', err);
         }
@@ -261,25 +286,25 @@ const App = () => {
                     <Routes>
                         <Route
                             path="/login"
-                            element={!user ? <RoleSelection isDark={isDark} /> : <Navigate to="/" replace />}
+                            element={<RoleSelection isDark={isDark} user={user} />}
                         />
                         <Route
                             path="/login/applicant"
-                            element={!user ? <CustomerEntry onLogin={handleLogin} isDark={isDark} /> : <Navigate to="/" replace />}
+                            element={<CustomerEntry onLogin={handleLogin} isDark={isDark} />}
                         />
                         <Route
                             path="/login/officer"
-                            element={!user ? <OfficerLogin onLogin={handleLogin} isDark={isDark} /> : <Navigate to="/" replace />}
+                            element={<OfficerLogin onLogin={handleLogin} isDark={isDark} />}
                         />
                         <Route
                             path="/login/admin"
-                            element={!user ? <AdminLogin onLogin={handleLogin} isDark={isDark} /> : <Navigate to="/" replace />}
+                            element={<AdminLogin onLogin={handleLogin} isDark={isDark} />}
                         />
 
                         <Route
-                            path="/"
+                            path="/dashboard"
                             element={
-                                !user ? <ApplyLoan user={null} onSubmit={addApplication} /> :
+                                !user ? <Navigate to="/login" replace /> :
                                     (user.role === 'ADMIN' || user.role === 'OFFICER') ?
                                         <AdminDashboard
                                             user={user}
@@ -287,14 +312,20 @@ const App = () => {
                                             onUpdateStatus={updateApplicationStatus}
                                             onDelete={deleteApplication}
                                             isDark={isDark}
+                                            onRefresh={fetchApplications}
                                         /> :
-                                        <CustomerDashboard applications={applications.filter(a => a.fullName === user.name)} />
+                                        <CustomerDashboard user={user} applications={applications.filter(a => a.fullName === user.name)} onLogout={handleLogout} />
                             }
                         />
 
                         <Route
+                            path="/"
+                            element={<Navigate to="/login" replace />}
+                        />
+
+                        <Route
                             path="/apply"
-                            element={<ApplyLoan user={user} onSubmit={addApplication} />}
+                            element={(!user || user.isGuest) ? <Navigate to="/login" replace /> : <ApplyLoan user={user} onSubmit={addApplication} />}
                         />
 
                         <Route path="/emi-calculator" element={<EMICalculator />} />

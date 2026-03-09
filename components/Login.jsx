@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../src/config/api';
 
 const Login = ({ onLogin, isDark }) => {
     const [username, setUsername] = useState('');
@@ -6,13 +7,14 @@ const Login = ({ onLogin, isDark }) => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:5001/api/login', {
+            const response = await fetch(`${API_BASE_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -69,10 +71,10 @@ const Login = ({ onLogin, isDark }) => {
                                     type="text"
                                     required
                                     className={`w-full px-6 py-4 rounded-2xl outline-none border-2 transition-all font-bold ${isDark
-                                            ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500'
-                                            : 'bg-gray-50 border-gray-100 focus:border-[#003d82]'
+                                        ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500'
+                                        : 'bg-gray-50 border-gray-100 focus:border-[#003d82]'
                                         }`}
-                                    placeholder="e.g. admin_hdfc"
+                                    placeholder="e.g. admin1"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                 />
@@ -86,8 +88,8 @@ const Login = ({ onLogin, isDark }) => {
                                     type="password"
                                     required
                                     className={`w-full px-6 py-4 rounded-2xl outline-none border-2 transition-all font-bold ${isDark
-                                            ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500'
-                                            : 'bg-gray-50 border-gray-100 focus:border-[#003d82]'
+                                        ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500'
+                                        : 'bg-gray-50 border-gray-100 focus:border-[#003d82]'
                                         }`}
                                     placeholder="••••••••"
                                     value={password}
@@ -100,8 +102,8 @@ const Login = ({ onLogin, isDark }) => {
                             type="submit"
                             disabled={loading}
                             className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 ${loading
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-[#003d82] text-white hover:bg-[#002d62] shadow-blue-500/20'
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-[#003d82] text-white hover:bg-[#002d62] shadow-blue-500/20'
                                 }`}
                         >
                             {loading ? 'Verifying Credentials...' : 'Secure Authorization'}

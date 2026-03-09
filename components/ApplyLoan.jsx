@@ -3,6 +3,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { geminiService } from '../services/geminiService';
 
+import { API_BASE_URL } from '../src/config/api';
+
 const ApplyLoan = ({ user, onSubmit }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -29,7 +31,12 @@ const ApplyLoan = ({ user, onSubmit }) => {
         educationLevel: '',
         maritalStatus: '',
         bankAccountVintageMonths: '',
-        pan: ''
+        pan: '',
+        // Education Loan Specific Fields
+        studentMarks: '',
+        courseType: '',
+        collegeTier: '',
+        courseDuration: ''
     });
 
     const [formErrors, setFormErrors] = useState({});
@@ -54,9 +61,11 @@ const ApplyLoan = ({ user, onSubmit }) => {
         if (formData.loanAmount !== '' && loanAmt < 10000) errors.loanAmount = "Minimum loan amount is ₹10,000";
 
         // Fraud Check / Mismatched Data
-        if (income > 0 && loanAmt > income * 10) {
-            warnings.push("High Leverage: Loan amount exceeds 10x your annual income.");
-            riskScore -= 30;
+        // Rule Check: 15x Monthly Income (User Requirement)
+        const monthlyInc = income / 12;
+        if (monthlyInc > 0 && loanAmt > monthlyInc * 15) {
+            warnings.push("High Leverage: Amount exceeds 15x your monthly income guideline.");
+            riskScore -= 25;
         }
 
         const monthlyIncome = income / 12;
@@ -110,7 +119,7 @@ const ApplyLoan = ({ user, onSubmit }) => {
         setLoading(true);
         try {
             const appId = `APP${Date.now().toString().slice(-8)}`;
-            const response = await fetch('http://localhost:5001/api/predict-loan', {
+            const response = await fetch(`${API_BASE_URL}/api/predict-loan`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -120,14 +129,25 @@ const ApplyLoan = ({ user, onSubmit }) => {
                     ...formData
                 })
             });
+            console.log("Loan request sent to backend:", { id: appId, ...formData });
             const prediction = await response.json();
 
-            // Format for onSubmit (legacy support)
+            // Guard: if server returned an error object instead of a prediction
+            if (prediction.error || !prediction.status) {
+                console.error('AI Engine Error:', prediction.error || prediction);
+                alert(`AI Engine returned an error: ${prediction.error || 'No status received. Check backend logs.'}`);
+                return;
+            }
+
+            // Format for onSubmit (App.jsx notifications + state)
             const finalApp = {
                 ...prediction,
                 id: appId,
                 fullName: formData.fullName,
+                // Keep formData fields but ensure loanAmount is numeric
                 ...formData,
+                loanAmount: parseFloat(formData.loanAmount) || 0,
+                status: prediction.status,   // Ensure prediction.status always wins
                 createdAt: new Date().toISOString()
             };
 
@@ -136,29 +156,42 @@ const ApplyLoan = ({ user, onSubmit }) => {
             if (onSubmit) onSubmit(finalApp);
         } catch (err) {
             console.error(err);
-            alert("Connection error. Ensure HDFC AI Server is running.");
+            alert("Connection error. Ensure HDFC AI Server is running on port 5001.");
         } finally {
             setLoading(false);
         }
     };
+
 
     const sectionClass = "bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 space-y-4 mb-6 transition-all hover:shadow-md";
     const labelClass = "block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5 px-1";
     const inputClass = "w-full px-5 py-3 rounded-xl bg-gray-50 dark:bg-slate-800 border-2 border-transparent focus:border-[#003d82] dark:focus:border-blue-500 focus:bg-white dark:focus:bg-slate-700 outline-none transition-all font-bold text-gray-800 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600";
 
     if (apiResult) {
+        // Normalise status – backend may return MANUAL_REVIEW which is not APPROVED/REJECTED
+        const rawStatus = apiResult.status || 'PENDING';
+        const displayStatus =
+            rawStatus === 'MANUAL_REVIEW' ? 'SENT FOR REVIEW' :
+                rawStatus === 'REVIEW_REQUIRED' ? 'SENT FOR REVIEW' : rawStatus;
+
+        const headerColor =
+            rawStatus === 'APPROVED' ? 'bg-green-500' :
+                rawStatus === 'REJECTED' ? 'bg-red-500' : 'bg-blue-600';
+
         return (
             <div className="max-w-3xl mx-auto py-10 animate-in fade-in zoom-in-95 duration-700">
                 <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl overflow-hidden border-4 border-white dark:border-slate-800">
-                    <div className={`p-10 text-center ${apiResult.status === 'APPROVED' ? 'bg-green-500' : apiResult.status === 'REJECTED' ? 'bg-red-500' : 'bg-blue-600'} text-white`}>
+                    <div className={`p-10 text-center ${headerColor} text-white`}>
                         <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-white/50">
-                            {apiResult.status === 'APPROVED' ? (
+                            {rawStatus === 'APPROVED' ? (
                                 <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7"></path></svg>
+                            ) : rawStatus === 'REJECTED' ? (
+                                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
                             ) : (
                                 <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             )}
                         </div>
-                        <h2 className="text-4xl font-black mb-1">LOAN {apiResult.status}</h2>
+                        <h2 className="text-4xl font-black mb-1">LOAN {displayStatus}</h2>
                         <p className="text-white/80 font-bold uppercase tracking-widest text-xs">Application ID: {successId}</p>
                     </div>
 
@@ -191,26 +224,46 @@ const ApplyLoan = ({ user, onSubmit }) => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="pt-6 border-t dark:border-slate-800">
                             <h3 className="font-black text-gray-800 dark:text-white text-sm mb-4">AI Reasoning & Next Steps</h3>
                             <ul className="space-y-3">
-                                {apiResult.reasoning?.map((reason, i) => (
-                                    <li key={i} className="flex items-start space-x-3 text-xs text-gray-600 dark:text-gray-400 font-medium">
-                                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1 flex-shrink-0"></div>
-                                        <span>{reason}</span>
-                                    </li>
-                                ))}
+                                {apiResult.education_evaluation ? (
+                                    <>
+                                        <li className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/20">
+                                            <span className="text-[10px] font-black text-blue-800 dark:text-blue-300 uppercase">Placement Prob.</span>
+                                            <span className="text-xs font-black text-blue-600 dark:text-blue-400">{apiResult.education_evaluation.placementProbability}</span>
+                                        </li>
+                                        <li className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/20">
+                                            <span className="text-[10px] font-black text-blue-800 dark:text-blue-300 uppercase">Expected Salary</span>
+                                            <span className="text-xs font-black text-blue-600 dark:text-blue-400">{apiResult.education_evaluation.expectedSalary}</span>
+                                        </li>
+                                        <li className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/20">
+                                            <span className="text-[10px] font-black text-blue-800 dark:text-blue-300 uppercase">Moratorium</span>
+                                            <span className="text-xs font-black text-blue-600 dark:text-blue-400">{apiResult.education_evaluation.moratoriumPeriod}</span>
+                                        </li>
+                                        <li className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/20">
+                                            <span className="text-[10px] font-black text-blue-800 dark:text-blue-300 uppercase">Collateral Req.</span>
+                                            <span className="text-xs font-black text-blue-600 dark:text-blue-400">{apiResult.education_evaluation.collateralRequired}</span>
+                                        </li>
+                                    </>
+                                ) : (
+                                    apiResult.reasoning?.map((reason, i) => (
+                                        <li key={i} className="flex items-start space-x-3 text-xs text-gray-600 dark:text-gray-400 font-medium">
+                                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1 flex-shrink-0"></div>
+                                            <span>{reason}</span>
+                                        </li>
+                                    ))
+                                )}
                             </ul>
                         </div>
-
-                        <button
-                            onClick={() => navigate('/')}
-                            className="w-full py-5 bg-[#003d82] text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition-all"
-                        >
-                            RETURN TO DASHBOARD
-                        </button>
                     </div>
+
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="w-full py-5 bg-[#003d82] text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 hover:scale-[1.02] transition-all"
+                    >
+                        RETURN TO DASHBOARD
+                    </button>
                 </div>
             </div>
         );
@@ -258,12 +311,28 @@ const ApplyLoan = ({ user, onSubmit }) => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClass}>Annual Income (₹)</label>
-                                <input type="number" name="income" value={formData.income} onChange={handleChange} placeholder="e.g. 1200000" className={inputClass} required />
+                                <input
+                                    type="number"
+                                    name="income"
+                                    value={formData.income}
+                                    onChange={(e) => setFormData({ ...formData, income: e.target.value })}
+                                    placeholder="Annual Income"
+                                    className={inputClass}
+                                    required
+                                />
                                 {aiPreview.errors.income && <p className="text-[9px] text-red-500 font-bold mt-1 uppercase">{aiPreview.errors.income}</p>}
                             </div>
                             <div>
                                 <label className={labelClass}>Credit Score (CIBIL)</label>
-                                <input type="number" name="creditScore" value={formData.creditScore} onChange={handleChange} placeholder="300-900" className={inputClass} required />
+                                <input
+                                    type="number"
+                                    name="creditScore"
+                                    value={formData.creditScore}
+                                    onChange={(e) => setFormData({ ...formData, creditScore: e.target.value })}
+                                    placeholder="Credit Score"
+                                    className={inputClass}
+                                    required
+                                />
                                 {aiPreview.errors.creditScore && <p className="text-[9px] text-red-500 font-bold mt-1 uppercase">{aiPreview.errors.creditScore}</p>}
                             </div>
                             <div>
@@ -301,12 +370,59 @@ const ApplyLoan = ({ user, onSubmit }) => {
                                     <option value="60">60 Months (5 yrs)</option>
                                 </select>
                             </div>
+                            <div>
+                                <label className={labelClass}>Loan Purpose</label>
+                                <select name="loanPurpose" value={formData.loanPurpose} onChange={handleChange} className={inputClass} required>
+                                    <option value="">Select Purpose</option>
+                                    <option value="Personal">Personal Loan</option>
+                                    <option value="Education">Education Loan</option>
+                                    <option value="Home">Home Loan</option>
+                                    <option value="Vehicle">Vehicle Loan</option>
+                                    <option value="Medical">Medical Emergency</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    {/* SECTION: ADDITIONAL DATA */}
+                    {/* SECTION: EDUCATION DETAILS (Conditional) */}
+                    {formData.loanPurpose === 'Education' && (
+                        <div className={sectionClass}>
+                            <h3 className="font-black text-[#003d82] dark:text-blue-400 uppercase tracking-widest text-[11px] mb-4">IV. Academic & Course Profile</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className={labelClass}>Student Academic Score (%)</label>
+                                    <input type="number" name="studentMarks" value={formData.studentMarks} onChange={handleChange} placeholder="e.g. 85" className={inputClass} required />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Course Type</label>
+                                    <select name="courseType" value={formData.courseType} onChange={handleChange} className={inputClass} required>
+                                        <option value="">Select Course</option>
+                                        <option value="Engineering">Engineering</option>
+                                        <option value="Medical">Medical</option>
+                                        <option value="MBA">MBA</option>
+                                        <option value="Arts">Arts</option>
+                                        <option value="Others">Others</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>College Tier</label>
+                                    <select name="collegeTier" value={formData.collegeTier} onChange={handleChange} className={inputClass} required>
+                                        <option value="">Select Tier</option>
+                                        <option value="Tier 1">Tier 1 (IIT/IIM/Top Univ)</option>
+                                        <option value="Tier 2">Tier 2 (Reputed State Colg)</option>
+                                        <option value="Tier 3">Tier 3 (Other)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Course Duration (Years)</label>
+                                    <input type="number" name="courseDuration" value={formData.courseDuration} onChange={handleChange} placeholder="e.g. 4" className={inputClass} required />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className={sectionClass}>
-                        <h3 className="font-black text-[#003d82] dark:text-blue-400 uppercase tracking-widest text-[11px] mb-4">IV. Demographic Metadata</h3>
+                        <h3 className="font-black text-[#003d82] dark:text-blue-400 uppercase tracking-widest text-[11px] mb-4">{formData.loanPurpose === 'Education' ? 'V.' : 'IV.'} Demographic Metadata</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label className={labelClass}>Residential</label>
@@ -332,6 +448,60 @@ const ApplyLoan = ({ user, onSubmit }) => {
                                     <option value="Single">Single</option>
                                     <option value="Married">Married</option>
                                 </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SECTION: DOCUMENT UPLOAD */}
+                    <div className={sectionClass}>
+                        <h3 className="font-black text-[#003d82] dark:text-blue-400 uppercase tracking-widest text-[11px] mb-4">{formData.loanPurpose === 'Education' ? 'VI.' : 'V.'} Document Verification</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="relative">
+                                <label className={labelClass}>Aadhaar Card (Front/Back)</label>
+                                <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-2xl transition-all ${documents.aadhaar ? 'border-green-500 bg-green-50/10' : 'border-gray-200 dark:border-slate-800'}`}>
+                                    <div className="space-y-1 text-center">
+                                        {scanningDocs.aadhaar ? (
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                <p className="mt-2 text-[10px] font-black text-blue-600 uppercase">AI Scanning...</p>
+                                            </div>
+                                        ) : documents.aadhaar ? (
+                                            <div className="flex flex-col items-center">
+                                                <svg className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                <p className="text-[10px] font-bold text-green-700 uppercase mt-1">Verified: {documents.aadhaar}</p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <svg className="mx-auto h-8 w-8 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                <div className="flex text-xs text-gray-400"><label className="relative cursor-pointer bg-white dark:bg-slate-900 rounded-md font-bold text-blue-600 hover:text-blue-500 outline-none"><span>Upload File</span><input name="aadhaar" type="file" className="sr-only" onChange={handleFileChange} /></label></div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="relative">
+                                <label className={labelClass}>PAN Card Details</label>
+                                <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-2xl transition-all ${documents.pan ? 'border-green-500 bg-green-50/10' : 'border-gray-200 dark:border-slate-800'}`}>
+                                    <div className="space-y-1 text-center">
+                                        {scanningDocs.pan ? (
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                <p className="mt-2 text-[10px] font-black text-blue-600 uppercase">AI OCR Check...</p>
+                                            </div>
+                                        ) : documents.pan ? (
+                                            <div className="flex flex-col items-center">
+                                                <svg className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                <p className="text-[10px] font-bold text-green-700 uppercase mt-1">OCR Success: {documents.pan}</p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <svg className="mx-auto h-8 w-8 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                <div className="flex text-xs text-gray-400"><label className="relative cursor-pointer bg-white dark:bg-slate-900 rounded-md font-bold text-blue-600 hover:text-blue-500 outline-none"><span>Upload File</span><input name="pan" type="file" className="sr-only" onChange={handleFileChange} /></label></div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

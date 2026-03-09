@@ -20,16 +20,25 @@ CREATE TABLE users (
 
 -- 2. Loan Applications Table (Core Data + AI Insights)
 CREATE TABLE applications (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id VARCHAR(50) PRIMARY KEY,
     applicant_id INT,
     
     -- Applicant Profile Data
     full_name VARCHAR(150) NOT NULL,
+    mobile VARCHAR(20),
+    age INT,
     income DECIMAL(15, 2) NOT NULL,
     loan_amount DECIMAL(15, 2) NOT NULL,
     credit_score INT NOT NULL,
+    employment_type VARCHAR(50),
     loan_purpose VARCHAR(100),
     tenure INT COMMENT 'Tenure in months',
+    existing_loan_count INT DEFAULT 0,
+    existing_emis DECIMAL(15, 2),
+    job_tenure DECIMAL(5, 2),
+    experience DECIMAL(5, 2),
+    residential_status VARCHAR(50),
+    dependents INT,
     
     -- AI/ML Insight Fields (JSON for rich dashboard data)
     ai_creditworthiness INT COMMENT 'Rule-based safety score (0-100)',
@@ -57,7 +66,6 @@ CREATE TABLE applications (
     banker_remark TEXT,
     is_manual_override BOOLEAN DEFAULT FALSE,
     
-    FOREIGN KEY (applicant_id) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_status (status)
 ) ENGINE=InnoDB;
 
@@ -67,17 +75,18 @@ CREATE TABLE notifications (
     user_id INT,
     target_role ENUM('APPLICANT', 'OFFICER', 'ADMIN'),
     message TEXT NOT NULL,
+    type VARCHAR(50) DEFAULT 'GENERAL',
+    application_id VARCHAR(50),
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_user_notif (user_id, is_read)
 ) ENGINE=InnoDB;
 
 -- 4. Audit Ledger (Decision History)
 CREATE TABLE application_history (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    application_id INT,
+    application_id VARCHAR(50) NOT NULL,
     officer_id INT NOT NULL,
     action VARCHAR(50) NOT NULL,
     rejection_reason TEXT,
@@ -135,9 +144,9 @@ GROUP BY off.id;
 -- 1. Setup Internal Users
 -- Note: In production, passwords must be hashed.
 INSERT INTO users (username, password_hash, full_name, role) VALUES 
-('admin_hdfc', 'pbkdf2:sha256:260000$admin_salt$hashed_pass', 'System Administrator', 'ADMIN'),
-('ramesh_kannan', 'pbkdf2:sha256:260000$officer_salt$hashed_pass', 'Ramesh Kannan', 'OFFICER'),
-('surendran_v', 'pbkdf2:sha256:260000$officer_salt2$hashed_pass', 'Surendran', 'OFFICER'),
+('admin1', 'admin123', 'System Administrator', 'ADMIN'),
+('rameshkannan', '1234', 'Ramesh Kannan', 'OFFICER'),
+('surendran', '1234', 'Surendran', 'OFFICER'),
 ('arun_kumar', 'pbkdf2:sha256:260000$applicant_salt$hashed_pass', 'Arun Kumar', 'APPLICANT');
 
 -- 2. Insert a Sample Loan Application

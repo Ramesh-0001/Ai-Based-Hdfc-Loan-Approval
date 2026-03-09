@@ -5,6 +5,9 @@ import React, { useState, useEffect } from 'react';
  * Requirement: Fetches data from Flask backend and displays key metrics.
  */
 const Dashboard = () => {
+    // API URL configuration
+    const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+
     // State for storing the API response
     const [stats, setStats] = useState(null);
     // State for tracking loading status
@@ -17,7 +20,7 @@ const Dashboard = () => {
         const fetchData = async () => {
             try {
                 console.log("Fetching dashboard data...");
-                const response = await fetch("http://localhost:5001/api/dashboard-stats");
+                const response = await fetch(`${API_BASE_URL}/api/dashboard-stats`);
 
                 if (!response.ok) {
                     throw new Error("Failed to fetch data from API");

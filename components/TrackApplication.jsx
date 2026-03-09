@@ -2,32 +2,29 @@
 import React, { useState } from 'react';
 
 const TrackApplication = ({ applications }) => {
-    const [appId, setAppId] = useState('');
     const [mobile, setMobile] = useState('');
     const [foundApp, setFoundApp] = useState(null);
     const [error, setError] = useState('');
 
     const handleSearch = (e) => {
         e.preventDefault();
-        const searchId = appId.trim().toLowerCase();
-        const result = applications.find(a => a.id.toLowerCase() === searchId);
+
+        if (mobile.length < 10) {
+            setError('Please enter a valid 10-digit registered mobile number.');
+            setFoundApp(null);
+            return;
+        }
+
+        // Sort by id descending or createdAt descending (find gets the first match, but if we assume apps are chronological, find is fine or we can filter and take the latest)
+        // Here we just find the first application that matches the mobile number
+        const result = applications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).find(a => a.mobile === mobile);
 
         if (result) {
-            if (mobile.length < 10) {
-                setError('Please enter a valid 10-digit registered mobile number.');
-                setFoundApp(null);
-                return;
-            }
-            if (result.mobile && result.mobile !== mobile) {
-                setError('Application ID found, but Mobile Number does not match our records.');
-                setFoundApp(null);
-                return;
-            }
             setFoundApp(result);
             setError('');
         } else {
             setFoundApp(null);
-            setError(`Application ID "${appId}" not found in our records. Please verify the ID or contact support.`);
+            setError(`No application found for the mobile number "${mobile}". Please verify the number or contact support.`);
         }
     };
 
@@ -40,17 +37,6 @@ const TrackApplication = ({ applications }) => {
 
             <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700">
                 <form onSubmit={handleSearch} className="space-y-5">
-                    <div>
-                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-2 font-serif">Application Reference</label>
-                        <input
-                            type="text"
-                            className="w-full p-4 bg-gray-50 dark:bg-slate-700 dark:text-white border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all uppercase placeholder:normal-case font-mono tracking-wider"
-                            placeholder="e.g. 5xjwma9"
-                            value={appId}
-                            onChange={(e) => setAppId(e.target.value)}
-                            required
-                        />
-                    </div>
                     <div>
                         <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-2 font-serif">Registered Mobile Number</label>
                         <input
@@ -108,7 +94,7 @@ const TrackApplication = ({ applications }) => {
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">AI Score</p>
-                                <p className="text-xl font-black text-gray-800 dark:text-gray-100">{foundApp.aiCreditworthiness}%</p>
+                                <p className="text-xl font-black text-gray-800 dark:text-gray-100">{foundApp.aiCreditworthiness}</p>
                             </div>
                         </div>
 

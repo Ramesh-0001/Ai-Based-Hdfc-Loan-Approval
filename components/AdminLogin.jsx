@@ -10,6 +10,7 @@ const AdminLogin = ({ onLogin, isDark }) => {
     const [loading, setLoading] = useState(false);
     const [showOtp, setShowOtp] = useState(false);
     const navigate = useNavigate();
+    const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
     const handleInitialSubmit = (e) => {
         e.preventDefault();
@@ -27,7 +28,7 @@ const AdminLogin = ({ onLogin, isDark }) => {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:5001/api/login/admin', {
+            const response = await fetch(`${API_BASE_URL}/api/login/admin`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password, otp })
@@ -37,7 +38,7 @@ const AdminLogin = ({ onLogin, isDark }) => {
 
             if (data.success) {
                 onLogin(data.user);
-                navigate('/');
+                navigate('/dashboard');
             } else {
                 setError(data.message || 'Invalid Admin Credentials');
             }

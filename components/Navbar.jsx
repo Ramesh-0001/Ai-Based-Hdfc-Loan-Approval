@@ -7,7 +7,7 @@ const Navbar = ({ user, onLogout, isDark, onToggleTheme, notifications = [], onM
     const location = useLocation();
     const [showNotif, setShowNotif] = useState(false);
 
-    const isLoginPage = location.pathname === '/login';
+    const isLoginPage = location.pathname.startsWith('/login');
 
     // Filter notifications based on Role-Based Access Control
     const userNotifications = notifications.filter(n => {
@@ -81,11 +81,11 @@ const Navbar = ({ user, onLogout, isDark, onToggleTheme, notifications = [], onM
                 {!isLoginPage && (
                     <div className="hidden md:flex items-center space-x-1 lg:space-x-2 mx-4 overflow-x-auto">
                         <Link
-                            to="/"
-                            className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${location.pathname === '/' ? 'active-glitter text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
+                            to="/dashboard"
+                            className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${location.pathname === '/dashboard' ? 'active-glitter text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                            <span className="hidden lg:inline">Home</span>
+                            <span className="hidden lg:inline">Dashboard</span>
                         </Link>
 
                         {(user?.role === 'ADMIN' || user?.role === 'OFFICER') && (
@@ -178,7 +178,7 @@ const Navbar = ({ user, onLogout, isDark, onToggleTheme, notifications = [], onM
                                         )}
                                     </div>
                                     <div className="p-3 bg-gray-50 dark:bg-slate-900/50 border-t dark:border-slate-700 text-center">
-                                        <Link to="/" onClick={() => setShowNotif(false)} className="text-[10px] font-black text-[#003d82] dark:text-blue-400 tracking-widest uppercase hover:underline">View All Applications</Link>
+                                        <Link to="/dashboard" onClick={() => setShowNotif(false)} className="text-[10px] font-black text-[#003d82] dark:text-blue-400 tracking-widest uppercase hover:underline">View All Applications</Link>
                                     </div>
                                 </div>
                             )}
@@ -208,7 +208,7 @@ const Navbar = ({ user, onLogout, isDark, onToggleTheme, notifications = [], onM
                         </div>
                     )}
 
-                    {user && (
+                    {user ? (
                         <button
                             onClick={() => {
                                 onLogout();
@@ -221,6 +221,18 @@ const Navbar = ({ user, onLogout, isDark, onToggleTheme, notifications = [], onM
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
                         </button>
+                    ) : (
+                        !isLoginPage && (
+                            <Link
+                                to="/login"
+                                className="flex items-center space-x-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/30 rounded-xl transition-all active:scale-95 group"
+                            >
+                                <svg className="w-4 h-4 text-white group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                <span className="text-xs font-black uppercase tracking-widest leading-none">Sign In</span>
+                            </Link>
+                        )
                     )}
                 </div>
             </div>

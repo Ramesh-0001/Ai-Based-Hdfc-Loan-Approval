@@ -1,131 +1,132 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { User, ShieldCheck, ArrowRight, Lock, Cpu, Globe, Activity } from 'lucide-react';
 
-
-const RoleSelection = ({ isDark, user }) => {
+const RoleSelection = ({ user }) => {
     const navigate = useNavigate();
 
     const roles = [
         {
             id: 'applicant',
-            title: 'Loan Applicant',
-            desc: 'Apply for home, personal, or business loans with AI-driven instant risk profiling.',
-            icon: (
-                <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-            ),
-            theme: 'blue',
-            path: '/login/applicant'
+            title: 'Consumer portal',
+            desc: 'Access personal loan services and manage your credit portfolio.',
+            icon: User,
+            path: '/login/applicant',
+            tag: 'Public access'
         },
         {
             id: 'officer',
-            title: 'Bank Officer',
-            desc: 'Review loan applications, manage fraud alerts, and process manual overrides.',
-            icon: (
-                <svg className="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-            ),
-            theme: 'green',
-            path: '/login/officer'
+            title: 'Underwriting terminal',
+            desc: 'Authorized risk assessment and institutional lending management.',
+            icon: Activity,
+            path: '/login/officer',
+            tag: 'Authorized only'
         },
         {
             id: 'admin',
-            title: 'System Admin',
-            desc: 'Manage system users, monitor AI node health, and access detailed security logs.',
-            icon: (
-                <svg className="w-12 h-12 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-            ),
-            theme: 'indigo',
-            path: '/login/admin'
+            title: 'System governance',
+            desc: 'Global policy orchestration and core system integrity control.',
+            icon: ShieldCheck,
+            path: '/login/admin',
+            tag: 'Administrative'
         }
     ];
 
     return (
-        <div className={`min-h-[80vh] flex flex-col items-center justify-center p-4`}>
-            {/* Quick Session Resume Button */}
-            {user && (
-                <div className="mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
-                    <button
-                        onClick={() => navigate('/dashboard')}
-                        className={`flex items-center space-x-6 p-1.5 pr-8 rounded-full border-2 transition-all hover:scale-105 active:scale-95 group ${isDark
-                            ? 'bg-indigo-600/10 border-indigo-500/50 hover:bg-indigo-600/20'
-                            : 'bg-blue-50 border-blue-200 hover:bg-blue-100 shadow-xl shadow-blue-500/10'
-                            }`}
-                    >
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-xl shadow-lg ${isDark ? 'bg-indigo-500 text-white' : 'bg-white text-[#003d82]'
-                            }`}>
-                            {user.name.charAt(0).toUpperCase()}
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 font-sans">
+            <div className="max-w-5xl w-full text-center space-y-6">
+                <div className="space-y-4">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                        <div className="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">H</div>
+                        <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1 rounded-lg">
+                            <Lock size={12} className="text-blue-600" />
+                            <span className="text-xs font-medium text-blue-600">Secure Access</span>
                         </div>
-                        <div className="text-left">
-                            <p className={`text-[10px] font-black uppercase tracking-widest leading-none mb-1 ${isDark ? 'text-indigo-400' : 'text-blue-600'}`}>Session Active</p>
-                            <h3 className={`text-sm font-black tracking-tight ${isDark ? 'text-white' : 'text-[#003d82]'}`}>
-                                Continue as {user.name} <span className="ml-2 font-medium opacity-50">({user.role})</span>
-                            </h3>
-                        </div>
-                        <svg className="w-5 h-5 ml-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                    </button>
-                    <div className="mt-4 flex justify-center">
-                        <div className={`h-1 w-24 rounded-full ${isDark ? 'bg-slate-800' : 'bg-gray-100'}`}></div>
+                    </div>
+                    <div className="space-y-2">
+                        <h1 className="text-2xl font-semibold text-gray-900">Select your portal</h1>
+                        <p className="text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
+                            Choose your access portal for the HDFC Bank loan management system.
+                        </p>
                     </div>
                 </div>
-            )}
 
-            <div className="text-center mb-12">
-                <h1 className={`text-4xl font-black mb-3 tracking-tight ${isDark ? 'text-white' : 'text-[#003d82]'}`}>
-                    Secure Access Portal
-                </h1>
-                <p className={`text-sm font-bold uppercase tracking-[0.3em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
-                    Select your operational role at HDFC Bank
-                </p>
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {roles.map((role) => (
+                        <button
+                            key={role.id}
+                            onClick={() => navigate(role.path)}
+                            className="bg-white border border-gray-200 rounded-xl p-6 hover:border-blue-500 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all duration-200 text-left flex flex-col items-start group relative h-full"
+                        >
+                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                                    {role.tag}
+                                </span>
+                            </div>
+                            
+                            <div className="w-11 h-11 rounded-xl bg-slate-50 text-gray-400 flex items-center justify-center mb-6 transition-all duration-200 group-hover:bg-blue-600 group-hover:text-white">
+                                <role.icon size={22} />
+                            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full">
-                {roles.map((role) => (
-                    <div
-                        key={role.id}
-                        onClick={() => navigate(role.path)}
-                        className={`group p-8 rounded-[2.5rem] border-4 cursor-pointer transition-all hover:scale-105 active:scale-95 ${isDark
-                            ? 'bg-slate-900 border-slate-800 hover:border-indigo-500/50 hover:shadow-indigo-500/10'
-                            : 'bg-white border-gray-100 hover:border-blue-500/50 shadow-2xl hover:shadow-blue-500/20 shadow-gray-200/50'
-                            }`}
-                    >
-                        <div className={`w-20 h-20 rounded-3xl mb-6 flex items-center justify-center transition-transform group-hover:rotate-12 ${isDark ? 'bg-slate-800' : 'bg-gray-50'
-                            }`}>
-                            {role.icon}
-                        </div>
-                        <h2 className={`text-2xl font-black mb-3 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                            {role.title}
-                        </h2>
-                        <p className={`text-sm font-medium leading-relaxed mb-8 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                            {role.desc}
-                        </p>
-                        <div className={`inline-flex items-center space-x-2 font-black text-xs uppercase tracking-widest ${role.theme === 'blue' ? 'text-blue-500' : role.theme === 'green' ? 'text-green-500' : 'text-indigo-500'
-                            }`}>
-                            <span>Authorize Access</span>
-                            <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                        </div>
+                            <div className="space-y-2 flex-grow w-full">
+                                <h2 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                                    {role.title}
+                                </h2>
+                                <p className="text-sm text-gray-500 leading-relaxed">
+                                    {role.desc}
+                                </p>
+                            </div>
+
+                            <div className="w-full mt-6 pt-4 border-t border-gray-200 flex items-center justify-between text-sm font-medium text-blue-600 transition-all group-hover:text-blue-700">
+                                <div className="flex items-center group-hover:translate-x-1 transition-transform duration-200">
+                                    <span>Continue to login</span>
+                                    <ArrowRight size={14} className="ml-2" />
+                                </div>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+
+                {user && (
+                    <div className="pt-4">
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="inline-flex items-center gap-4 bg-white border border-gray-200 hover:border-blue-500 px-5 py-3 rounded-xl transition-all duration-200 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] group"
+                        >
+                            <div className="w-8 h-8 rounded-lg bg-white border-r border-gray-200 flex items-center justify-center text-xs font-medium">
+                                {user.name?.charAt(0)}
+                            </div>
+                            <div className="flex flex-col items-start">
+                                <p className="text-xs text-gray-400 font-medium leading-none mb-1">Active session</p>
+                                <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">Resume as {user.name}</span>
+                            </div>
+                            <ArrowRight size={14} className="text-gray-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                        </button>
                     </div>
-                ))}
+                )}
             </div>
 
-            <div className="mt-16 text-center">
-                <p className={`text-[10px] font-black uppercase tracking-[0.4em] ${isDark ? 'text-slate-700' : 'text-gray-300'}`}>
-                    Property of HDFC Bank AI Risk Engineering
+            <footer className="mt-6 border-t border-gray-200 pt-8 w-full max-w-4xl mx-auto text-center space-y-4 pb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FooterBadge icon={Lock} label="Bank-grade encryption" />
+                    <FooterBadge icon={Cpu} label="AI-powered risk engine" />
+                    <FooterBadge icon={Globe} label="Secure banking protocol" />
+                </div>
+                <p className="text-xs text-gray-400">
+                    © 2026 HDFC Bank Ltd. All rights reserved.
                 </p>
-            </div>
+            </footer>
         </div>
     );
 };
 
+const FooterBadge = ({ icon: Icon, label }) => (
+  <div className="flex items-center justify-center gap-2 group">
+      <div className="text-gray-400 group-hover:text-blue-600 transition-colors">
+          <Icon size={14} />
+      </div>
+      <span className="text-xs font-medium text-gray-400 group-hover:text-gray-600 transition-colors">{label}</span>
+  </div>
+);
 
 export default RoleSelection;

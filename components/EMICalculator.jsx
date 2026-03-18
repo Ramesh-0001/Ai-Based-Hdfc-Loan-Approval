@@ -1,11 +1,11 @@
-
 import React, { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Download, ArrowRight, Calculator, TrendingUp, Info } from 'lucide-react';
 
-const EMICalculator = () => {
-    const [amount, setAmount] = useState(500000);
+const EMICalculator = ({ initialAmount, initialTenure }) => {
+    const [amount, setAmount] = useState(initialAmount || 500000);
     const [interest, setInterest] = useState(8.5);
-    const [tenure, setTenure] = useState(5);
+    const [tenure, setTenure] = useState(initialTenure || 5);
 
     const calculateEMI = () => {
         const r = interest / 12 / 100;
@@ -18,183 +18,198 @@ const EMICalculator = () => {
     const totalPayable = emi * tenure * 12;
     const totalInterest = totalPayable - amount;
 
-    const data = [
-        { name: 'Principal Amount', value: amount },
-        { name: 'Total Interest', value: totalInterest }
+    const chartData = [
+        { name: 'Principal amount', value: amount },
+        { name: 'Interest payable', value: totalInterest }
     ];
 
-    const COLORS = ['#003d82', '#e11b22'];
+    const COLORS = ['#2563eb', '#cbd5e1'];
 
     return (
-        <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            <div className="text-center space-y-4">
-                <span className="px-4 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-[#003d82] dark:text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] rounded-full border border-blue-100 dark:border-blue-800">Financial Planning</span>
-                <h1 className="text-5xl font-black text-[#003d82] dark:text-blue-400 tracking-tight">Smart EMI Calculator</h1>
-                <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto font-medium">Precision simulation engine for HDFC institutional lending. Plan your financial future with dynamic visualizations.</p>
-            </div>
+        <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-700 py-6 px-6 font-sans">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-10 border-b border-gray-200">
+                <div>
+                    <div className="inline-flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100 mb-4">
+                        <Calculator size={12} className="text-blue-600" />
+                        <span className="text-[11px] font-medium text-blue-600">Precision modeler</span>
+                    </div>
+                    <h2 className="text-2xl font-medium text-gray-900 tracking-tight">EMI terminal</h2>
+                    <p className="text-sm text-gray-400 mt-2 font-normal">Institutional amortization and repayment simulator</p>
+                </div>
+                <div className="hidden sm:flex items-center space-x-3 px-6 py-3 bg-white border border-gray-200 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">
+                    <TrendingUp className="text-blue-600" size={16} />
+                    <span className="text-[11px] font-medium text-gray-900">Real-time projections</span>
+                </div>
+            </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Inputs Column */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Inputs Section */}
                 <div className="lg:col-span-5 space-y-6">
-                    <div className="bg-white dark:bg-slate-800 p-10 rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 dark:border-slate-700 space-y-8 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 dark:bg-slate-700/50 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700"></div>
+                    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] space-y-6">
+                        <RangeInput 
+                            label="Capital exposure" 
+                            value={amount} 
+                            min={50000} 
+                            max={10000000} 
+                            step={50000} 
+                            unit="₹"
+                            onChange={setAmount} 
+                        />
+                        <RangeInput 
+                            label="Annual interest rate" 
+                            value={interest} 
+                            min={5} 
+                            max={20} 
+                            step={0.1} 
+                            unit="%"
+                            onChange={setInterest} 
+                        />
+                        <RangeInput 
+                            label="Maturity horizon (years)" 
+                            value={tenure} 
+                            min={1} 
+                            max={30} 
+                            step={1} 
+                            unit="y"
+                            onChange={setTenure} 
+                        />
+                    </div>
 
-                        <div className="relative z-10 space-y-10">
+                    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-6"></div>
+                        <div className="relative z-10 flex items-center justify-between">
                             <div>
-                                <div className="flex justify-between items-end mb-4">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Loan Amount</label>
-                                    <span className="text-2xl font-black text-[#003d82] dark:text-blue-400">₹{amount.toLocaleString()}</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min="50000"
-                                    max="10000000"
-                                    step="50000"
-                                    value={amount}
-                                    onChange={(e) => setAmount(Number(e.target.value))}
-                                    className="w-full h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-[#003d82] hover:accent-[#e11b22] transition-colors"
-                                />
-                                <div className="flex justify-between text-[8px] text-gray-300 mt-2 font-black uppercase tracking-tighter">
-                                    <span>min ₹50,000</span>
-                                    <span>max ₹1,00,00,000</span>
-                                </div>
+                                <p className="text-xs font-medium text-gray-500 mb-2 font-normal">Monthly installment</p>
+                                <h2 className="text-2xl font-semibold tracking-tight">₹{Math.round(emi).toLocaleString()}</h2>
+                                <p className="text-[11px] text-blue-400 font-medium mt-6 flex items-center">
+                                    <Info size={12} className="mr-2" />
+                                    Estimated periodic liability
+                                </p>
                             </div>
-
-                            <div>
-                                <div className="flex justify-between items-end mb-4">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Interest Rate (% P.A.)</label>
-                                    <span className="text-2xl font-black text-[#003d82] dark:text-blue-400">{interest}%</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min="5"
-                                    max="20"
-                                    step="0.1"
-                                    value={interest}
-                                    onChange={(e) => setInterest(Number(e.target.value))}
-                                    className="w-full h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-[#003d82] hover:accent-[#e11b22] transition-colors"
-                                />
-                                <div className="flex justify-between text-[8px] text-gray-300 mt-2 font-black uppercase tracking-tighter">
-                                    <span>min 5%</span>
-                                    <span>max 20%</span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <div className="flex justify-between items-end mb-4">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Tenure (Years)</label>
-                                    <span className="text-2xl font-black text-[#003d82] dark:text-blue-400">{tenure} Yrs</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="30"
-                                    step="1"
-                                    value={tenure}
-                                    onChange={(e) => setTenure(Number(e.target.value))}
-                                    className="w-full h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-[#003d82] hover:accent-[#e11b22] transition-colors"
-                                />
-                                <div className="flex justify-between text-[8px] text-gray-300 mt-2 font-black uppercase tracking-tighter">
-                                    <span>min 1 yr</span>
-                                    <span>max 30 yrs</span>
-                                </div>
+                            <div className="w-14 h-14 bg-white border border-gray-200 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                                <Calculator className="text-blue-400" size={24} />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Visual Analysis Column */}
-                <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Results HUD */}
-                    <div className="bg-[#003d82] p-10 rounded-[2.5rem] shadow-2xl flex flex-col justify-between text-white relative overflow-hidden group">
-                        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-1000"></div>
-                        <div className="relative z-10">
-                            <p className="text-blue-200 text-[10px] font-black uppercase tracking-[0.3em] mb-2">Monthly Installment</p>
-                            <h2 className="text-5xl font-black tracking-tighter mb-10">₹{Math.round(emi).toLocaleString()}</h2>
-
-                            <div className="space-y-6 pt-10 border-t border-white/10">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-blue-200 text-[10px] font-black uppercase tracking-widest">Total Interest</span>
-                                    <span className="text-xl font-black">₹{Math.round(totalInterest).toLocaleString()}</span>
+                {/* Analysis Section */}
+                <div className="lg:col-span-7">
+                    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] h-full flex flex-col">
+                        <h3 className="text-sm font-medium text-gray-900 mb-6">Amortization intelligence</h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
+                            <div className="h-64 relative flex items-center justify-center">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={chartData}
+                                            innerRadius={65}
+                                            outerRadius={85}
+                                            paddingAngle={8}
+                                            dataKey="value"
+                                            stroke="none"
+                                            animationDuration={1500}
+                                        >
+                                            {chartData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip 
+                                            contentStyle={{ 
+                                                borderRadius: '16px', 
+                                                border: 'none', 
+                                                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', 
+                                                fontSize: '11px',
+                                                fontWeight: '500'
+                                            }}
+                                        />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">Ratio</span>
+                                    <span className="text-xl font-semibold text-gray-900">{(amount / totalPayable * 100).toFixed(0)}%</span>
                                 </div>
-                                <div className="flex justify-between items-end">
-                                    <div>
-                                        <span className="text-blue-300 text-[8px] font-black uppercase tracking-[0.2em] block mb-1">Total Payable</span>
-                                        <span className="text-3xl font-black text-white">₹{Math.round(totalPayable).toLocaleString()}</span>
+                            </div>
+
+                            <div className="space-y-6 flex flex-col justify-center">
+                                <ResultMetric label="Total interest yield" value={`₹${Math.round(totalInterest).toLocaleString()}`} color="#cbd5e1" />
+                                <ResultMetric label="Aggregate liability" value={`₹${Math.round(totalPayable).toLocaleString()}`} color="#2563eb" primary />
+                                
+                                <div className="pt-8 border-t border-gray-200 space-y-4">
+                                    <div className="flex justify-between items-center text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                                        <span>Exposure ratio</span>
+                                        <span className="text-blue-600">{Math.round((amount / totalPayable) * 100)}% pri / {Math.round((totalInterest / totalPayable) * 100)}% int</span>
                                     </div>
-                                    <div className="bg-white/10 p-2 rounded-xl text-[10px] font-black uppercase tracking-tighter animate-pulse">
-                                        SECURE QUOTE
+                                    <div className="w-full bg-slate-50 h-2 rounded-full overflow-hidden border border-gray-200 p-0.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">
+                                        <div 
+                                            className="bg-blue-600 h-full rounded-full transition-all duration-1000 ease-out" 
+                                            style={{ width: `${(amount / totalPayable) * 100}%` }}
+                                        />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Chart Card */}
-                    <div className="bg-white dark:bg-slate-800 p-10 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-slate-700 flex flex-col items-center">
-                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6">Payment Composition</h4>
-                        <div className="w-full h-48">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={data}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        stroke="none"
-                                    >
-                                        {data.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        contentStyle={{
-                                            borderRadius: '16px',
-                                            border: 'none',
-                                            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
-                                            fontSize: '10px',
-                                            fontWeight: 'bold',
-                                            textTransform: 'uppercase'
-                                        }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <div className="mt-6 flex flex-col space-y-3 w-full">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-[#003d82]"></div>
-                                    <span className="text-[10px] font-bold text-gray-500 uppercase">Principal</span>
-                                </div>
-                                <span className="text-[10px] font-black text-gray-800 dark:text-white">{Math.round((amount / totalPayable) * 100)}%</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-[#e11b22]"></div>
-                                    <span className="text-[10px] font-bold text-gray-500 uppercase">Interest</span>
-                                </div>
-                                <span className="text-[10px] font-black text-gray-800 dark:text-white">{Math.round((totalInterest / totalPayable) * 100)}%</span>
-                            </div>
+                        <div className="mt-6 flex flex-col sm:flex-row gap-4 border-t border-gray-200 pt-10">
+                            <button className="flex-1 flex items-center justify-center space-x-2 py-4 border border-gray-200 rounded-xl text-xs font-semibold text-gray-400 hover:bg-slate-50 hover:text-gray-900 transition-all active:scale-95">
+                                <Download size={14} />
+                                <span>Export audit report</span>
+                            </button>
+                            <button className="flex-1 flex items-center justify-center space-x-2 py-4 bg-blue-600 text-white rounded-xl text-xs font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] hover:bg-blue-700 transition-all active:scale-95">
+                                <span>Initialize application</span>
+                                <ArrowRight size={14} />
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div className="bg-gray-50 dark:bg-slate-950/50 p-10 rounded-[3rem] border-2 border-dashed border-gray-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-8">
-                <div className="space-y-2">
-                    <h3 className="text-xl font-black text-gray-800 dark:text-white uppercase tracking-tighter">Ready to proceed with this plan?</h3>
-                    <p className="text-xs text-gray-500 font-medium">Get instant AI-driven approval in less than 60 seconds.</p>
-                </div>
-                <div className="flex space-x-4">
-                    <button className="px-10 py-5 bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-slate-700 text-gray-800 dark:text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:border-[#003d82] transition-all active:scale-95">Download PDF</button>
-                    <button className="px-10 py-5 bg-[#e11b22] text-white font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-red-700 shadow-xl shadow-red-900/20 transition-all active:scale-95">Apply Instantly</button>
-                </div>
-            </div>
+            
+            <footer className="text-center pt-8">
+                 <p className="text-[10px] font-medium text-gray-300 tracking-widest">
+                    HDFC Institutional Network • Yield Engine v4.8
+                 </p>
+            </footer>
         </div>
     );
 };
+
+const RangeInput = ({ label, value, min, max, step, unit, onChange }) => (
+    <div className="space-y-6 group">
+        <div className="flex justify-between items-end px-1">
+            <label className="text-xs font-medium text-gray-400 group-focus-within:text-blue-600 transition-colors">{label}</label>
+            <span className="text-2xl font-semibold text-gray-900 tracking-tight">
+                {unit === '₹' ? `₹${value.toLocaleString()}` : `${value}${unit}`}
+            </span>
+        </div>
+        <div className="relative h-1.5 flex items-center px-1">
+            <input
+                type="range"
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                onChange={(e) => onChange(Number(e.target.value))}
+                className="w-full h-1.5 bg-gray-100 rounded-full appearance-none cursor-pointer accent-blue-600 border border-transparent focus:outline-none transition-all"
+            />
+        </div>
+        <div className="flex justify-between text-[10px] text-gray-300 font-medium px-1 tracking-wider uppercase">
+            <span>Base: {unit === '₹' ? '₹50k' : min + unit}</span>
+            <span>Ceiling: {unit === '₹' ? '₹1cr' : max + unit}</span>
+        </div>
+    </div>
+);
+
+const ResultMetric = ({ label, value, color, primary }) => (
+    <div className="space-y-2 group">
+        <p className="text-[11px] font-medium text-gray-400 flex items-center group-hover:text-blue-600 transition-colors">
+            <span className="w-1.5 h-1.5 rounded-full mr-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]" style={{ backgroundColor: color }}></span>
+            {label}
+        </p>
+        <p className={`text-2xl font-semibold tracking-tight ${primary ? 'text-gray-900' : 'text-gray-500'}`}>
+            {value}
+        </p>
+    </div>
+);
 
 export default EMICalculator;

@@ -1,213 +1,361 @@
-
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import DashboardLayout from './layout/DashboardLayout';
+import ApplyLoan from './ApplyLoan';
+import ViewApplication from './ViewApplication';
+// Other components as needed
+import AIChatAssistant from './dashboard/AIChatAssistant';
+import ApplicationTimeline from './dashboard/ApplicationTimeline';
+import AIRiskScoreDetails from './dashboard/AIRiskScoreDetails';
+import TrackApplication from './TrackApplication';
+import EMICalculator from './EMICalculator';
+import EligibilityChecker from './EligibilityChecker';
+import DocumentsModule from './DocumentsModule';
+import { 
+  ArrowRight,
+  TrendingUp,
+  ChevronRight,
+  ShieldCheck,
+  Calculator,
+  Activity,
+  FileCheck2,
+  AlertCircle,
+  Clock,
+  PieChart as PieChartIcon,
+  Award,
+  Zap,
+  Briefcase
+} from 'lucide-react';
 
-const CustomerDashboard = ({ user, applications, onLogout }) => {
-    const navigate = useNavigate();
-    const [expandedAppId, setExpandedAppId] = useState(null);
+const CustomerDashboard = ({ user, applications = [], onLogout, onSubmit }) => {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const latestApp = applications.length > 0 ? applications[0] : null;
 
-    const isGuest = user?.isGuest;
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <div className="space-y-6 animate-in fade-in duration-500 font-sans">
+            <header className="pb-8 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">Overview</h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  Loan eligibility, financial profile & application status
+                </p>
+              </div>
+            </header>
 
-    const handleSignIn = () => {
-        onLogout();
-        navigate('/login');
-    };
-
-    const toggleExpand = (id) => {
-        setExpandedAppId(expandedAppId === id ? null : id);
-    };
-
-    return (
-        <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Row 1: Prime AI & Audit Metrics (4 Cards) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              {/* Card 1: AI Risk Score */}
+              <div className="relative bg-white rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] group h-[160px]">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#003d82] dark:text-blue-400">
-                        {isGuest ? 'Guest Portal Preview' : 'My Loan Applications'}
-                    </h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-1">
-                        {isGuest ? 'You are viewing the dashboard as a guest. Please sign in to apply.' : 'Track your requests and get instant updates.'}
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm font-medium text-gray-600">AI Risk Score</p>
+                    <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                      <ShieldCheck size={16} />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 leading-none mb-2">
+                    {latestApp ? (latestApp.aiCreditworthiness || latestApp.ai_creditworthiness || 0) : '--'}/100
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    {latestApp ? 'Based on latest audit' : 'Submit app for audit'}
+                  </p>
+                </div>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveTab(latestApp ? 'eligibility' : 'apply');
+                  }}
+                  className="absolute bottom-4 left-5 right-5 py-2 bg-blue-50 text-blue-600 rounded-xl text-[11px] font-semibold hover:bg-blue-600 hover:text-white transition-all opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 flex items-center justify-center gap-2"
+                >
+                  {latestApp ? 'View Detailed Audit' : 'Start Application'} <ArrowRight size={14} />
+                </button>
+              </div>
+
+              {/* Card 2: Active Application */}
+              <div className="relative bg-white rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] group h-[160px]">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-[11px] font-medium text-gray-600">Active Application</p>
+                    <div className="w-8 h-8 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500">
+                      <Clock size={16} />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 leading-none mb-2 truncate">
+                    {latestApp ? (latestApp.status === 'PENDING' ? 'Manual Review' : latestApp.status.charAt(0) + latestApp.status.slice(1).toLowerCase()) : 'None'}
+                  </h3>
+                  <p className="text-xs text-gray-400 truncate">
+                    {latestApp ? `Updated: ${new Date(latestApp.createdAt || Date.now()).toLocaleDateString()}` : 'Apply to start'}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setActiveTab(latestApp ? 'view-application' : 'apply')}
+                  className="absolute bottom-4 left-5 right-5 py-2 bg-blue-50 text-blue-600 rounded-xl text-[11px] font-semibold hover:bg-blue-600 hover:text-white transition-all opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 flex items-center justify-center gap-2"
+                >
+                  {latestApp ? 'View Application details' : 'Initialize Application'} <ArrowRight size={14} />
+                </button>
+              </div>
+
+              {/* Card 3: Approval Probability */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] group flex flex-col justify-between h-[160px]">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm font-medium text-gray-600">Approval Probability</p>
+                    <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                      <Zap size={16} />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 leading-none mb-2">
+                    {latestApp ? (latestApp.aiCreditworthiness ? `${latestApp.aiCreditworthiness}%` : '82%') : '--'}
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    {latestApp ? (latestApp.aiCreditworthiness >= 70 ? 'High chance' : latestApp.aiCreditworthiness >= 50 ? 'Medium' : 'Low') : 'Analysis pending'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 4: Eligible Loan Amount */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] group flex flex-col justify-between h-[160px]">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm font-medium text-gray-600">Eligible Loan Amount</p>
+                    <div className="w-8 h-8 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
+                      <FileCheck2 size={16} />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 leading-none mb-2">
+                    {latestApp ? `₹${Number(latestApp.eligibleAmount || Math.round(latestApp.loanAmount * 0.95)).toLocaleString()}` : '--'}
+                  </h3>
+                  <p className="text-xs text-gray-400">Based on income & profile</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2: Operational Financial Metrics (4 Cards) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Card 5: Credit Score */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] group flex flex-col justify-between h-[160px]">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm font-medium text-gray-600">Credit Score</p>
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                      !latestApp ? 'bg-slate-50 text-gray-400' :
+                      (latestApp.creditScore >= 750 ? 'bg-green-50 text-green-600' : 
+                      latestApp.creditScore >= 650 ? 'bg-orange-50 text-orange-500' : 'bg-red-50 text-red-500')
+                    }`}>
+                      <Award size={16} />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 leading-none mb-2">
+                    {latestApp?.creditScore || '--'}
+                  </h3>
+                  <p className={`text-[12px] font-medium ${
+                    !latestApp ? 'text-gray-400' :
+                    (latestApp.creditScore >= 750 ? 'text-green-600' : 
+                    latestApp.creditScore >= 650 ? 'text-orange-500' : 'text-red-500')
+                  }`}>
+                    {latestApp ? (latestApp.creditScore >= 750 ? 'Excellent' : latestApp.creditScore >= 650 ? 'Good' : 'Poor') : 'Score pending'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 6: Income Ratio */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] group flex flex-col justify-between h-[160px]">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm font-medium text-gray-600">Debt-to-Income (DTI)</p>
+                    <div className="w-8 h-8 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
+                      <PieChartIcon size={16} />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 leading-none mb-2">
+                    {latestApp?.derived_features?.dti_ratio 
+                      ? `${Math.round(latestApp.derived_features.dti_ratio)}%` 
+                      : (() => {
+                          const insight = latestApp?.ml_insight;
+                          if (!insight) return '--';
+                          if (typeof insight === 'object') return `${Math.round(insight.dti_ratio || 0)}%`;
+                          try {
+                            const parsed = JSON.parse(insight);
+                            return `${Math.round(parsed.dti_ratio || 0)}%`;
+                          } catch (e) {
+                            return '--';
+                          }
+                        })()}
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    {latestApp ? 'Calculated Risk Ratio' : 'Awaiting financial data'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 7: Monthly EMI */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] group flex flex-col justify-between h-[160px]">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-sm font-medium text-gray-600">Proposed EMI</p>
+                    <div className="w-8 h-8 bg-red-50 rounded-xl flex items-center justify-center text-red-500">
+                      <span className="font-semibold text-[14px]">₹</span>
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 leading-none mb-2">
+                    {latestApp ? `₹${Math.round(latestApp?.derived_features?.proposed_emi || 
+                      (() => {
+                        const insight = latestApp?.ml_insight;
+                        let val = 0;
+                        if (insight && typeof insight === 'object') {
+                          val = insight.proposed_emi || 0;
+                        } else if (insight && typeof insight === 'string') {
+                          try { val = JSON.parse(insight).proposed_emi || 0; } catch (e) {}
+                        }
+                        
+                        // Final Fallback: Manual Formula if data missing
+                        if (val <= 0 && latestApp.loanAmount && latestApp.tenure) {
+                          const P = latestApp.loanAmount;
+                          const R = (10.5 / 100) / 12; // Static 10.5% fallback
+                          const N = latestApp.tenure;
+                          val = (P * R * Math.pow(1 + R, N)) / (Math.pow(1 + R, N) - 1);
+                        }
+                        return val || 0;
+                      })()).toLocaleString()}` : '--'}
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    {latestApp ? 'Projected monthly outgo' : 'Calculate your liability'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 8: Loan Requested */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] group flex flex-col justify-between h-[160px]">
+                <div>
+                  <div className="flex items-center justify-between mb-5">
+                    <p className="text-sm font-medium text-gray-600">Loan Requested</p>
+                    <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                      <Briefcase size={16} />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 leading-none mb-2">
+                    {latestApp ? `₹${Number(latestApp.loanAmount).toLocaleString()}` : '--'}
+                  </h3>
+                  <p className="text-xs text-gray-400 truncate">
+                    {latestApp ? (latestApp.loanPurpose || 'General Purpose') : 'Requested by applicant'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Application Tracking Section */}
+            <ApplicationTimeline latestApp={latestApp} />
+
+          </div>
+        );
+
+      case 'apply':
+        return (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+            <ApplyLoan 
+              user={user} 
+              onSubmit={(appData) => {
+                onSubmit(appData);
+              }}
+              onFinish={() => setActiveTab('view-application')} 
+            />
+          </div>
+        );
+
+      case 'view-application':
+        return (
+          <ViewApplication 
+            app={latestApp} 
+            onBack={() => setActiveTab('dashboard')} 
+          />
+        );
+
+      case 'eligibility':
+        return (
+          <div className="animate-in fade-in duration-500">
+             <AIRiskScoreDetails app={latestApp} />
+          </div>
+        );
+
+      case 'emi':
+        return (
+          <div className="animate-in fade-in duration-500">
+             <EMICalculator 
+                initialAmount={latestApp?.loanAmount || 500000} 
+                initialTenure={latestApp?.tenure ? parseInt(latestApp.tenure)/12 : 5}
+             />
+          </div>
+        );
+      
+      case 'timeline':
+        return (
+          <div className="animate-in fade-in duration-500">
+             <TrackApplication 
+                applications={applications} 
+                user={user}
+                onSelectApp={(app) => {
+                   // Optional: handle clicking an app in track view
+                }}
+             />
+          </div>
+        );
+
+      case 'check-eligibility':
+        return (
+          <div className="animate-in fade-in duration-500">
+             <EligibilityChecker />
+          </div>
+        );
+
+      case 'documents':
+        return (
+          <div className="animate-in fade-in duration-500">
+             <DocumentsModule />
+          </div>
+        );
+
+      case 'health':
+        return (
+            <div className="animate-in fade-in duration-500 h-[60vh] flex flex-col justify-center max-w-2xl mx-auto">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] text-center font-sans">
+                    <div className="w-16 h-16 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mx-auto mb-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">
+                        <TrendingUp size={32} />
+                    </div>
+                    <h3 className="text-[28px] font-semibold text-gray-900 tracking-tight capitalize">Financial Health Hub</h3>
+                    <p className="text-[15px] text-gray-500 mt-4 leading-relaxed font-normal">
+                        Establishing a secure connection to your institutional record {user?.name}. Your health metrics will synchronize once the banking gateway is verified.
                     </p>
-                </div>
-                {!isGuest && (
-                    <Link to="/apply" className="px-6 py-3 bg-[#e11b22] text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg hover:bg-red-700 transition-all active:scale-95">
-                        New Application
-                    </Link>
-                )}
-            </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700 overflow-hidden transition-colors duration-300">
-                <div className="p-6">
-                    {applications.length === 0 ? (
-                        <div className="text-center py-16 space-y-4">
-                            <div className="bg-gray-100 dark:bg-slate-700 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                            </div>
-                            <p className="text-gray-500 dark:text-gray-400 font-medium">
-                                {isGuest ? 'Application processing is disabled for guests.' : "You haven't submitted any applications yet."}
-                            </p>
-                            {isGuest ? (
-                                <button
-                                    onClick={handleSignIn}
-                                    className="inline-block px-8 py-3 bg-blue-600 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/20"
-                                >
-                                    Sign in to Apply
-                                </button>
-                            ) : (
-                                <Link to="/apply" className="text-[#003d82] dark:text-blue-400 font-bold hover:underline transition-colors">Get started today</Link>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {applications.map(app => (
-                                <div key={app.id} className="group border dark:border-slate-700 rounded-lg p-0 overflow-hidden transition-all duration-300">
-                                    <div
-                                        onClick={() => toggleExpand(app.id)}
-                                        className={`p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors ${expandedAppId === app.id ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
-                                    >
-                                        <div className="space-y-1">
-                                            <div className="flex items-center space-x-2">
-                                                <span className="font-bold text-lg text-gray-800 dark:text-gray-100">₹{app.loanAmount.toLocaleString()}</span>
-                                                <span className="text-gray-400 dark:text-gray-600">•</span>
-                                                <span className="text-sm text-gray-500 dark:text-gray-400">{app.loanPurpose}</span>
-                                            </div>
-                                            <p className="text-xs text-gray-400 dark:text-gray-500">ID: {app.id.toUpperCase()} • Submitted: {new Date(app.createdAt).toLocaleDateString()}</p>
-                                        </div>
-
-                                        <div className="flex items-center space-x-6">
-                                            <div className="text-right">
-                                                <div className={`text-sm font-bold px-3 py-1 rounded-full text-center ${app.status === 'APPROVED' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                                    app.status === 'REJECTED' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                                                        'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                                    }`}>
-                                                    {app.status}
-                                                </div>
-                                            </div>
-                                            <div className={`transform transition-transform duration-300 ${expandedAppId === app.id ? 'rotate-90' : ''}`}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 group-hover:text-[#003d82] dark:group-hover:text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Expandable Content */}
-                                    {expandedAppId === app.id && (
-                                        <div className="p-5 bg-gray-50 dark:bg-slate-800/50 border-t dark:border-slate-700 animate-in slide-in-from-top-2 duration-300">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-4">
-                                                    <div>
-                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Risk Assessment</p>
-                                                        <div className="flex items-center space-x-3">
-                                                            <div className={`px-2 py-1 rounded text-[10px] font-bold ${app.aiCreditworthiness >= 71 ? 'bg-green-100 text-green-700' : app.aiCreditworthiness >= 41 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                                                                Score: {app.aiCreditworthiness}
-                                                            </div>
-                                                            <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                                                                {app.aiCreditworthiness >= 71 ? 'Low Risk' : app.aiCreditworthiness >= 41 ? 'Medium Risk' : 'High Risk'}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-4">
-                                                        <div>
-                                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
-                                                                AI Decision Basis
-                                                            </p>
-                                                            <div className="space-y-1 bg-white dark:bg-slate-800 p-3 rounded-lg border dark:border-slate-700 shadow-sm">
-                                                                {Array.isArray(app.aiReasoning) ? (
-                                                                    app.aiReasoning.map((reason, idx) => (
-                                                                        <p key={idx} className="text-[11px] text-gray-600 dark:text-gray-300 font-medium">• {reason.replace(/^•\s*/, '')}</p>
-                                                                    ))
-                                                                ) : (
-                                                                    <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{app.aiReasoning || "Decision pending final manual review."}"</p>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
-                                                        {app.status === 'REJECTED' && app.recommendations && app.recommendations.length > 0 && (
-                                                            <div className="p-3 bg-[#003d82]/5 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-800/50">
-                                                                <p className="text-[10px] font-black text-[#003d82] dark:text-blue-400 uppercase tracking-widest mb-2">Improvement Roadmap</p>
-                                                                <ul className="space-y-1">
-                                                                    {app.recommendations.map((rec, idx) => (
-                                                                        <li key={idx} className="text-[10px] text-blue-800 dark:text-blue-200 font-bold flex items-start">
-                                                                            <span className="mr-2">✨</span> {rec}
-                                                                        </li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border dark:border-slate-700">
-                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Submission Summary</p>
-                                                    <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                                                        <div>
-                                                            <p className="text-[10px] text-gray-400">Term</p>
-                                                            <p className="text-xs font-bold dark:text-white">{app.loanTenure} Months</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-[10px] text-gray-400">Interest Ratio</p>
-                                                            <p className="text-xs font-bold dark:text-white">10.5% p.a.</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-[10px] text-gray-400">Employment</p>
-                                                            <p className="text-xs font-bold dark:text-white">{app.employmentType}</p>
-                                                        </div>
-                                                        <div className="flex items-center space-x-1">
-                                                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                                            <span className="text-[10px] font-bold text-gray-400">RSA Verified</span>
-                                                        </div>
-                                                    </div>
-
-                                                    {app.status === 'APPROVED' && (
-                                                        <div className="mt-6 pt-4 border-t dark:border-slate-700">
-                                                            <div className="flex justify-between items-center mb-2">
-                                                                <p className="text-[10px] font-black text-[#003d82] dark:text-blue-400 uppercase">Monthly EMI Repayment</p>
-                                                                <p className="text-xs font-black text-green-600">₹{Math.round(app.emi || (app.loanAmount * 0.012)).toLocaleString()}</p>
-                                                            </div>
-                                                            <div className="bg-gray-50 dark:bg-slate-900 p-3 rounded-lg">
-                                                                <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest mb-1">Repayment Schedule</p>
-                                                                <div className="flex justify-between text-[10px] font-bold">
-                                                                    <span>Principal: 72%</span>
-                                                                    <span>Interest: 28%</span>
-                                                                </div>
-                                                                <div className="w-full h-1 bg-gray-200 rounded-full mt-1 overflow-hidden flex">
-                                                                    <div className="h-full bg-blue-600" style={{ width: '72%' }}></div>
-                                                                    <div className="h-full bg-amber-400" style={{ width: '28%' }}></div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    <button 
+                         onClick={() => setActiveTab('dashboard')}
+                         className="mt-6 px-6 py-3.5 bg-blue-600 text-white rounded-xl font-medium text-[15px] hover:bg-blue-700 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] active:scale-95 flex items-center space-x-2 mx-auto"
+                    >
+                        <span>Return to root</span>
+                        <ArrowRight size={16} />
+                    </button>
                 </div>
             </div>
+        );
 
-            <div className="bg-gray-50 dark:bg-slate-800 p-6 rounded-xl border border-gray-200 dark:border-slate-700 transition-colors duration-300">
-                <h3 className="font-bold text-gray-800 dark:text-white mb-2">How it works</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-                    <div className="flex items-start space-x-3">
-                        <div className="bg-[#003d82] dark:bg-blue-600 text-white w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold transition-colors">1</div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">Submit your basic financial details and requirements.</p>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                        <div className="bg-[#003d82] dark:bg-blue-600 text-white w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold transition-colors">2</div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">HDFC AI Engine analyzes your risk profile in real-time.</p>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                        <div className="bg-[#003d82] dark:bg-blue-600 text-white w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold transition-colors">3</div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">A Loan Officer provides final confirmation on your request.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <DashboardLayout 
+      user={user} 
+      onLogout={onLogout} 
+      activeTab={activeTab} 
+      setActiveTab={setActiveTab}
+    >
+      <div className="relative pb-24">
+        {renderContent()}
+        <AIChatAssistant />
+      </div>
+    </DashboardLayout>
+  );
 };
 
 export default CustomerDashboard;

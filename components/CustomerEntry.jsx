@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { User, ChevronLeft, ArrowRight, Shield } from 'lucide-react';
 
-const CustomerEntry = ({ onLogin, isDark }) => {
+const CustomerEntry = ({ onLogin }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
@@ -12,8 +12,6 @@ const CustomerEntry = ({ onLogin, isDark }) => {
         e.preventDefault();
         setLoading(true);
 
-        // Simulated API Call or just state update as per requirements
-        // "Allow access via name + phone/email OR Continue as Guest"
         setTimeout(() => {
             onLogin({
                 id: Date.now(),
@@ -22,7 +20,7 @@ const CustomerEntry = ({ onLogin, isDark }) => {
                 role: 'APPLICANT'
             });
             navigate('/dashboard');
-        }, 1000);
+        }, 1200);
     };
 
     const handleGuest = () => {
@@ -39,82 +37,105 @@ const CustomerEntry = ({ onLogin, isDark }) => {
     };
 
     return (
-        <div className="min-h-[80vh] flex items-center justify-center p-6">
-            <div className="max-w-md w-full">
-                <div className="text-center mb-10">
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 font-sans">
+            <div className="max-w-md w-full space-y-6">
+                <div className="text-center">
                     <button
                         onClick={() => navigate('/login')}
-                        className="mb-6 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-blue-500 flex items-center justify-center mx-auto space-x-2 transition-colors"
+                        className="mb-6 inline-flex items-center text-sm font-medium text-gray-400 hover:text-gray-900 transition-all duration-200 group"
                     >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
-                        <span>Back to Roles</span>
+                        <ChevronLeft size={14} className="mr-2 group-hover:-translate-x-1 transition-transform" />
+                        <span>Portal selection</span>
                     </button>
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-3xl shadow-xl shadow-blue-500/20 mb-6">
-                        <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
+                    
+                    <div className="flex items-center justify-center space-x-3 mb-6">
+                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">H</div>
                     </div>
-                    <h1 className={`text-3xl font-black tracking-tight mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        Applicant Portal
-                    </h1>
-                    <p className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
-                        Start your journey with HDFC AI
-                    </p>
+
+                    <h1 className="text-2xl font-semibold text-gray-900">Applicant Login</h1>
+                    <p className="text-sm text-gray-500 mt-2">Enter your details to continue</p>
                 </div>
 
-                <div className={`p-10 rounded-[2.5rem] shadow-2xl border-4 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-100'}`}>
+                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 px-1 text-gray-400">Full Name</label>
-                                <input
-                                    type="text"
-                                    className={`w-full px-6 py-4 rounded-2xl outline-none border-2 transition-all font-bold ${isDark ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500' : 'bg-gray-50 border-gray-100 focus:border-blue-600'
-                                        }`}
-                                    placeholder="Enter your name"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-black uppercase tracking-widest mb-2 px-1 text-gray-400">Email / Phone</label>
-                                <input
-                                    type="text"
-                                    className={`w-full px-6 py-4 rounded-2xl outline-none border-2 transition-all font-bold ${isDark ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500' : 'bg-gray-50 border-gray-100 focus:border-blue-600'
-                                        }`}
-                                    placeholder="email@example.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
-                            </div>
+                            <InputGroup 
+                                label="Full name" 
+                                type="text"
+                                placeholder="As per documents"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
+                            <InputGroup 
+                                label="Email address" 
+                                type="email"
+                                placeholder="Verification email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-5 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all active:scale-95"
+                            className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium text-sm shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] hover:bg-blue-700 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all duration-200 inline-flex items-center justify-center gap-2 disabled:opacity-50"
                         >
-                            {loading ? 'Processing...' : 'Access Dashboard'}
+                            {loading ? (
+                                <div className="flex items-center">
+                                    <div className="w-4 h-4 border-2 border-gray-200 border-t-white rounded-full animate-spin mr-3"></div>
+                                    <span>Signing in...</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <span>Continue</span>
+                                    <ArrowRight size={16} />
+                                </>
+                            )}
                         </button>
 
-                        <div className="relative py-4">
-                            <div className="absolute inset-0 flex items-center"><div className={`w-full border-t ${isDark ? 'border-slate-800' : 'border-gray-100'}`}></div></div>
-                            <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest"><span className={`${isDark ? 'bg-slate-900 text-slate-600' : 'bg-white text-gray-400'} px-4`}>OR</span></div>
+                        <div className="relative py-4 flex items-center justify-center text-center">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-gray-200"></div>
+                            </div>
+                            <span className="relative px-4 text-xs font-medium text-gray-400 bg-white uppercase">Or</span>
                         </div>
 
                         <button
                             type="button"
                             onClick={handleGuest}
-                            className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-widest border-2 transition-all active:scale-95 ${isDark ? 'border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-white' : 'border-gray-100 text-gray-400 hover:bg-gray-50 hover:text-gray-600'
-                                }`}
+                            className="w-full py-2.5 px-4 rounded-lg font-medium text-sm border border-gray-200 text-gray-500 hover:bg-slate-50 hover:text-gray-900 transition-all duration-200"
                         >
                             Continue as Guest
                         </button>
                     </form>
                 </div>
+                
+                <footer className="text-center space-y-2">
+                    <div className="flex items-center justify-center gap-2 text-gray-400">
+                        <Shield size={14} />
+                        <span className="text-xs font-medium">SSL Encrypted</span>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                        © 2026 HDFC Bank Ltd. All rights reserved.
+                    </p>
+                </footer>
             </div>
         </div>
     );
 };
+
+const InputGroup = ({ label, type, placeholder, value, onChange }) => (
+    <div className="space-y-1.5 group text-left">
+        <label className="text-xs font-medium text-gray-500 group-focus-within:text-blue-600 transition-colors">{label}</label>
+        <input
+            type={type}
+            required
+            className="w-full px-4 py-2.5 bg-slate-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all duration-200 text-sm text-gray-900 placeholder:text-gray-400"
+            placeholder={placeholder}
+            value={value}
+            onChange={onChange}
+        />
+    </div>
+);
 
 export default CustomerEntry;

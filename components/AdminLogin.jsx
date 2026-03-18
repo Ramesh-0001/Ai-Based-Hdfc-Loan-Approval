@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ShieldAlert, ChevronLeft, ArrowRight, Lock, Command } from 'lucide-react';
 
-const AdminLogin = ({ onLogin, isDark }) => {
+const AdminLogin = ({ onLogin }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [otp, setOtp] = useState('');
@@ -15,11 +15,10 @@ const AdminLogin = ({ onLogin, isDark }) => {
     const handleInitialSubmit = (e) => {
         e.preventDefault();
         setLoading(true);
-        // Simulate level 1 auth
         setTimeout(() => {
             setShowOtp(true);
             setLoading(false);
-        }, 1000);
+        }, 1200);
     };
 
     const handleFinalSubmit = async (e) => {
@@ -40,124 +39,144 @@ const AdminLogin = ({ onLogin, isDark }) => {
                 onLogin(data.user);
                 navigate('/dashboard');
             } else {
-                setError(data.message || 'Invalid Admin Credentials');
+                setError(data.message || 'Invalid admin credentials');
             }
         } catch (err) {
-            setError('Root access node unreachable.');
+            setError('System core timeout. Retransmitting...');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-[80vh] flex items-center justify-center p-6">
-            <div className="max-w-md w-full">
-                <div className="text-center mb-10">
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 font-sans">
+            <div className="max-w-md w-full space-y-6">
+                <div className="text-center">
                     <button
                         onClick={() => navigate('/login')}
-                        className="mb-6 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-indigo-500 flex items-center justify-center mx-auto space-x-2 transition-colors"
+                        className="mb-6 inline-flex items-center text-sm font-medium text-gray-400 hover:text-gray-900 transition-all duration-200 group"
                     >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
-                        <span>Back to Roles</span>
+                        <ChevronLeft size={14} className="mr-2 group-hover:-translate-x-1 transition-transform" />
+                        <span>Back to portals</span>
                     </button>
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-indigo-600 rounded-3xl shadow-xl shadow-indigo-500/20 mb-6 group">
-                        <svg className="w-10 h-10 text-white transition-transform group-hover:rotate-180 duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
+                    
+                    <div className="flex items-center justify-center space-x-3 mb-6">
+                        <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">H</div>
                     </div>
-                    <h1 className={`text-3xl font-black tracking-tight mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        Root System Auth
-                    </h1>
-                    <p className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
-                        High-Security Administrative Access
-                    </p>
+
+                    <h1 className="text-2xl font-semibold text-gray-900">Admin Login</h1>
+                    <p className="text-sm text-gray-500 mt-2">System administrator access</p>
                 </div>
 
-                <div className={`p-10 rounded-[2.5rem] shadow-2xl border-4 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-100'}`}>
+                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">
                     <form onSubmit={showOtp ? handleFinalSubmit : handleInitialSubmit} className="space-y-6">
                         {error && (
-                            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl">
-                                <span className="text-[10px] font-black text-red-600 uppercase tracking-tighter">{error}</span>
+                            <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">
+                                Error: {error}
                             </div>
                         )}
 
                         {!showOtp ? (
-                            <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-300">
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest mb-2 px-1 text-gray-400">Master Username</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className={`w-full px-6 py-4 rounded-2xl outline-none border-2 transition-all font-bold ${isDark ? 'bg-slate-950 border-slate-800 text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-100 focus:border-indigo-600'
-                                            }`}
-                                        placeholder="root_admin"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest mb-2 px-1 text-gray-400">Master Key</label>
-                                    <input
-                                        type="password"
-                                        required
-                                        className={`w-full px-6 py-4 rounded-2xl outline-none border-2 transition-all font-bold ${isDark ? 'bg-slate-950 border-slate-800 text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-100 focus:border-indigo-600'
-                                            }`}
-                                        placeholder="••••••••"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                    />
-                                </div>
+                            <div className="space-y-4">
+                                <InputGroup 
+                                    label="Admin Username" 
+                                    type="text"
+                                    placeholder="Enter admin ID"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                />
+                                <InputGroup 
+                                    label="Password" 
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full py-5 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95"
+                                    className="w-full py-2.5 bg-white border-r border-gray-200 rounded-lg font-medium text-sm shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] hover:bg-black hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all duration-200 inline-flex items-center justify-center gap-2 disabled:opacity-50 mt-4"
                                 >
-                                    {loading ? 'Initiating Phase I...' : 'Authorize Phase I'}
+                                    {loading ? (
+                                        <div className="flex items-center">
+                                            <div className="w-4 h-4 border-2 border-gray-200 border-t-white rounded-full animate-spin mr-3"></div>
+                                            <span>Verifying...</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <span>Continue</span>
+                                            <ArrowRight size={16} />
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         ) : (
-                            <div className="space-y-4 animate-in zoom-in-95 duration-500">
-                                <div className="p-4 bg-indigo-50 rounded-2xl mb-6">
-                                    <p className="text-[10px] font-black text-indigo-600 uppercase text-center leading-relaxed">
-                                        Phase I Verified. <br />Enter 6-Digit Secondary OTP.
-                                    </p>
+                            <div className="space-y-6 text-center">
+                                <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 flex items-center justify-center gap-2">
+                                    <div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-pulse"></div>
+                                    <p className="text-xs font-medium text-blue-700">Two-factor authentication required</p>
                                 </div>
-                                <div>
-                                    <label className="block text-[10px] font-black uppercase tracking-widest mb-2 px-1 text-gray-400">Security OTP</label>
+                                
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-gray-500">OTP Code</label>
                                     <input
                                         type="text"
                                         required
                                         maxLength="6"
-                                        className={`w-full px-6 py-4 rounded-2xl outline-none border-2 transition-all font-bold text-center tracking-[1em] text-lg ${isDark ? 'bg-slate-950 border-slate-800 text-white focus:border-indigo-500' : 'bg-gray-50 border-gray-100 focus:border-indigo-600'
-                                            }`}
+                                        className="w-full px-4 py-4 bg-slate-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all duration-200 text-2xl font-semibold text-center tracking-[0.3em] text-gray-900 placeholder:text-gray-300"
                                         placeholder="000000"
                                         value={otp}
-                                        onChange={(e) => setOtp(e.target.value)}
+                                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                                     />
                                 </div>
-                                <div className="flex flex-col space-y-3">
+
+                                <div className="flex flex-col space-y-4">
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full py-5 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all active:scale-95"
+                                        className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium text-sm shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] hover:bg-blue-700 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all duration-200"
                                     >
-                                        {loading ? 'Validating Root...' : 'Complete Authorization'}
+                                        {loading ? 'Verifying...' : 'Verify & Sign in'}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setShowOtp(false)}
-                                        className={`w-full py-3 text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-600 hover:text-white' : 'text-gray-400 hover:text-indigo-600'} transition-colors`}
+                                        className="text-xs font-medium text-gray-400 hover:text-gray-900 transition-all duration-200"
                                     >
-                                        Cancel Phase II
+                                        Go back
                                     </button>
                                 </div>
                             </div>
                         )}
                     </form>
                 </div>
+                
+                <footer className="text-center space-y-2">
+                    <div className="flex items-center justify-center gap-2 text-gray-400">
+                        <Command size={14} />
+                        <span className="text-xs font-medium">Admin access secured</span>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                        © 2026 HDFC Bank Ltd. Admin Console
+                    </p>
+                </footer>
             </div>
         </div>
     );
 };
+
+const InputGroup = ({ label, type, placeholder, value, onChange }) => (
+    <div className="space-y-1.5 group text-left">
+        <label className="text-xs font-medium text-gray-500 group-focus-within:text-blue-600 transition-colors">{label}</label>
+        <input
+            type={type}
+            required
+            className="w-full px-4 py-2.5 bg-slate-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all duration-200 text-sm text-gray-900 placeholder:text-gray-400"
+            placeholder={placeholder}
+            value={value}
+            onChange={onChange}
+        />
+    </div>
+);
 
 export default AdminLogin;

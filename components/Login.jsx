@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { API_BASE_URL } from '../src/config/api';
+import { ShieldCheck, ArrowRight, Lock, User, AlertCircle, Key, Cpu } from 'lucide-react';
 
-const Login = ({ onLogin, isDark }) => {
+const Login = ({ onLogin }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -28,109 +28,108 @@ const Login = ({ onLogin, isDark }) => {
                 setError(data.message || 'Authentication failed');
             }
         } catch (err) {
-            setError('Could not connect to the AI server. Is it running?');
+            setError('System unreachable. Please check your connection.');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className={`min-h-screen flex items-center justify-center p-6 transition-colors duration-500 ${isDark ? 'bg-slate-950' : 'bg-gray-50'}`}>
-            <div className="max-w-md w-full">
-                {/* Logo Section */}
-                <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-[#e11b22] rounded-3xl shadow-2xl shadow-red-500/20 mb-6 group transition-transform hover:scale-110">
-                        <span className="text-white font-black text-4xl">H</span>
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 font-sans">
+            <div className="max-w-md w-full space-y-6">
+                <div className="text-center">
+                    <div className="flex flex-col items-center justify-center space-y-4 mb-6">
+                        <div className="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">H</div>
+                        <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1 rounded-lg">
+                            <Lock size={12} className="text-blue-600" />
+                            <span className="text-xs font-medium text-blue-600">Secure Login</span>
+                        </div>
                     </div>
-                    <h1 className={`text-4xl font-black tracking-tight mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        HDFC <span className="text-[#003d82]">AI Portal</span>
-                    </h1>
-                    <p className={`font-bold text-sm uppercase tracking-widest ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                        Risk Management System v2.0
-                    </p>
+                    <h1 className="text-2xl font-semibold text-gray-900">Sign in to your account</h1>
+                    <p className="text-sm text-gray-500 mt-2">Enter your credentials to continue</p>
                 </div>
 
-                {/* Login Card */}
-                <div className={`p-10 rounded-[2.5rem] shadow-2xl border-4 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-100'}`}>
+                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">
+                    
+                    
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
-                            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center space-x-3 animate-head-shake">
-                                <div className="p-1 bg-red-500 rounded-full">
-                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                </div>
-                                <span className="text-xs font-black text-red-600 uppercase tracking-tighter">{error}</span>
+                            <div className="p-3 bg-red-50 border border-red-100 rounded-lg flex items-center gap-3 text-red-600">
+                                <AlertCircle size={16} />
+                                <span className="text-sm">{error}</span>
                             </div>
                         )}
 
                         <div className="space-y-4">
-                            <div>
-                                <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 px-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
-                                    Employee ID / Username
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    className={`w-full px-6 py-4 rounded-2xl outline-none border-2 transition-all font-bold ${isDark
-                                        ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500'
-                                        : 'bg-gray-50 border-gray-100 focus:border-[#003d82]'
-                                        }`}
-                                    placeholder="e.g. admin1"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                />
-                            </div>
-
-                            <div>
-                                <label className={`block text-[10px] font-black uppercase tracking-widest mb-2 px-1 ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
-                                    Access Pin / Password
-                                </label>
-                                <input
-                                    type="password"
-                                    required
-                                    className={`w-full px-6 py-4 rounded-2xl outline-none border-2 transition-all font-bold ${isDark
-                                        ? 'bg-slate-950 border-slate-800 text-white focus:border-blue-500'
-                                        : 'bg-gray-50 border-gray-100 focus:border-[#003d82]'
-                                        }`}
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                />
-                            </div>
+                            <InputPortal 
+                                label="Username" 
+                                type="text"
+                                placeholder="Enter your username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                icon={User}
+                            />
+                            <InputPortal 
+                                label="Password" 
+                                type="password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                icon={Lock}
+                            />
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 ${loading
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-[#003d82] text-white hover:bg-[#002d62] shadow-blue-500/20'
-                                }`}
+                            className="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium text-sm shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] hover:bg-blue-700 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all duration-200 inline-flex items-center justify-center gap-2 disabled:opacity-50"
                         >
-                            {loading ? 'Verifying Credentials...' : 'Secure Authorization'}
+                            {loading ? (
+                                <div className="flex items-center">
+                                    <div className="w-4 h-4 border-2 border-gray-200 border-t-white rounded-full animate-spin mr-3"></div>
+                                    <span>Signing in...</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <span>Sign in</span>
+                                    <ArrowRight size={16} />
+                                </>
+                            )}
                         </button>
                     </form>
-
-                    <div className="mt-8 text-center">
-                        <p className={`text-[10px] font-bold italic ${isDark ? 'text-slate-600' : 'text-gray-400'}`}>
-                            Property of HDFC Bank. Unauthorized access is strictly prohibited.
-                        </p>
-                    </div>
                 </div>
 
-                {/* Footer Branding */}
-                <div className="mt-10 flex justify-center items-center space-x-6">
-                    <div className="flex flex-col items-center">
-                        <div className={`w-8 h-1 rounded-full mb-1 ${isDark ? 'bg-slate-800' : 'bg-gray-200'}`}></div>
-                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-tighter">AI Node: 0042</span>
+                <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 text-gray-400 mb-3">
+                        <Cpu size={14} />
+                        <span className="text-xs font-medium">SSL Encrypted Connection</span>
                     </div>
-                    <div className="flex flex-col items-center">
-                        <div className={`w-8 h-1 rounded-full mb-1 ${isDark ? 'bg-slate-800' : 'bg-gray-200'}`}></div>
-                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-tighter">Region: West</span>
-                    </div>
+                    <p className="text-xs text-gray-400">
+                        © 2026 HDFC Bank Ltd. All rights reserved.
+                    </p>
                 </div>
             </div>
         </div>
     );
 };
+
+const InputPortal = ({ label, type, placeholder, value, onChange, icon: Icon }) => (
+    <div className="space-y-1.5 group text-left">
+        <label className="text-xs font-medium text-gray-500 group-focus-within:text-blue-600 transition-colors">{label}</label>
+        <div className="relative">
+            <input
+                type={type}
+                required
+                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all duration-200 text-sm text-gray-900 placeholder:text-gray-400"
+                placeholder={placeholder}
+                value={value}
+                onChange={onChange}
+            />
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors">
+                <Icon size={16} />
+            </div>
+        </div>
+    </div>
+);
 
 export default Login;

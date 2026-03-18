@@ -1,5 +1,5 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export const generateMonthlyReportPdf = (applications, monthlyAnalytics) => {
     // A4 Size: 210 x 297 mm
@@ -96,7 +96,7 @@ export const generateMonthlyReportPdf = (applications, monthlyAnalytics) => {
         `Rs ${(m.approvedLoan / 100000).toFixed(2)} Lacs`
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: yPos,
         head: [['Fiscal Period', 'Total Apps', 'Approved', 'Approval Rate', 'Total Disbursed']],
         body: riskBody,
@@ -134,7 +134,7 @@ export const generateMonthlyReportPdf = (applications, monthlyAnalytics) => {
         a.status
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: yPos,
         head: [['Applicant Name', 'Declared Income', 'Requested Loan', 'AI Score', 'Final Status']],
         body: recentApps,
@@ -187,4 +187,137 @@ export const generateMonthlyReportPdf = (applications, monthlyAnalytics) => {
 
     // Export PDF
     doc.save(`HDFC_AI_Monthly_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+};
+
+export const generateApplicationPdf = (app) => {
+    const doc = new jsPDF({ format: 'a4', unit: 'mm' });
+
+    // Colors
+    const hdfcBlue = [0, 61, 130];
+    const hdfcRed = [225, 27, 34];
+    const textGray = [60, 60, 60];
+
+    let yPos = 20;
+
+    // --- HEADER ---
+    doc.setFillColor(...hdfcRed);
+    doc.rect(14, yPos - 10, 16, 16, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("H", 18, yPos + 2);
+
+    doc.setTextColor(...hdfcBlue);
+    doc.setFontSize(20);
+    doc.text("HDFC AI Loan Application", 35, yPos);
+
+    doc.setTextColor(...textGray);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Ref: ${app.id || 'N/A'}`, 35, yPos + 6);
+    
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 150, yPos);
+
+    yPos += 20;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, yPos, 196, yPos);
+    yPos += 10;
+
+    // --- APPLICATION DETAILS ---
+    doc.setTextColor(...hdfcBlue);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Application Details", 14, yPos);
+    yPos += 8;
+
+    const details = [
+        ['Applicant Name', app.fullName || app.full_name || 'N/A'],
+        ['Email', app.email || 'N/A'],
+        ['Mobile', app.mobile || 'N/A'],
+        ['Annual Income', `Rs ${Number(app.income || 0).toLocaleString()}`],
+        ['Requested Loan', `Rs ${Number(app.loanAmount || app.loan_amount || 0).toLocaleString()}`],
+        ['Tenure', `${app.tenure} months`],
+        ['Employment Type', app.employmentType || app.employment_type || 'N/A'],
+        ['Loan Purpose', app.loanPurpose || app.loan_purpose || 'N/A'],
+        ['Credit Score', String(app.creditScore || app.credit_score || 'N/A')]
+    ];
+
+    autoTable(doc, {
+        startY: yPos,
+        body: details,
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 3 },
+        columnStyles: {
+            0: { fontStyle: 'bold', textColor: [100, 100, 100], cellWidth: 50 },
+            1: { textColor: [0, 0, 0] }
+        },
+        margin: { left: 14 }
+    });
+
+    yPos = doc.lastAutoTable.finalY + 15;
+
+    // --- AI RISK PROFILE ---
+    doc.setTextColor(...hdfcRed);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("AI Risk Audit Profile", 14, yPos);
+    yPos += 8;
+
+    const aiDetails = [
+        ['Final Decision', app.status],
+        ['AI Risk Score', `${app.aiCreditworthiness || app.ai_creditworthiness || '--'} / 100`],
+        ['Risk Level', `${app.riskLevel || app.risk_level || 'Unknown'} Risk`]
+    ];
+
+    autoTable(doc, {
+        startY: yPos,
+        body: aiDetails,
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 3 },
+        columnStyles: {
+            0: { fontStyle: 'bold', textColor: [100, 100, 100], cellWidth: 50 },
+            1: { textColor: [0, 0, 0] }
+        },
+        margin: { left: 14 }
+    });
+    
+    yPos = doc.lastAutoTable.finalY + 15;
+    
+    const rawBreakdown = app.score_breakdown || app.scoreBreakdown;
+    if (rawBreakdown) {
+        let breakdownData = [];
+        try {
+            breakdownData = typeof rawBreakdown === 'string' ? JSON.parse(rawBreakdown) : rawBreakdown;
+        } catch (e) {
+            console.error("Failed to parse score breakdown:", e);
+        }
+
+        if (Array.isArray(breakdownData) && breakdownData.length > 0) {
+            doc.setTextColor(...hdfcBlue);
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text("Score Breakdown", 14, yPos);
+            yPos += 8;
+            
+            const breakdownTable = breakdownData.map(b => [
+                b.factor,
+                b.reason,
+                (b.score >= 0 ? '+' : '') + b.score
+            ]);
+            
+            autoTable(doc, {
+                startY: yPos,
+                head: [['Factor', 'Reason', 'Score']],
+                body: breakdownTable,
+                theme: 'striped',
+                headStyles: { fillColor: hdfcBlue, textColor: 255 },
+                styles: { fontSize: 9, cellPadding: 3 },
+                margin: { left: 14, right: 14 }
+            });
+        }
+    }
+
+    doc.save(`Application_${app.id || 'Details'}.pdf`);
 };

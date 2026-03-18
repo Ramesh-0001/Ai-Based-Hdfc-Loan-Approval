@@ -1,165 +1,173 @@
-
 import React, { useState } from 'react';
+import { Search, ChevronLeft, History, Clock, CheckCircle2, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const TrackApplication = ({ applications }) => {
+const TrackApplication = ({ applications, user }) => {
     const [mobile, setMobile] = useState('');
-    const [foundApp, setFoundApp] = useState(null);
+    const [selectedAppId, setSelectedAppId] = useState(null);
     const [error, setError] = useState('');
+    const navigate = useNavigate();
+
+    const userApps = user ? applications.filter(a => a.fullName === user.name).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) : [];
+    
+    // Auto-select the first app if it exists and no app is selected
+    const displayedApp = selectedAppId ? applications.find(a => a.id === selectedAppId) : (userApps.length > 0 ? userApps[0] : null);
 
     const handleSearch = (e) => {
         e.preventDefault();
-
         if (mobile.length < 10) {
-            setError('Please enter a valid 10-digit registered mobile number.');
-            setFoundApp(null);
+            setError('Please enter a valid 10-digit mobile number');
             return;
         }
 
-        // Sort by id descending or createdAt descending (find gets the first match, but if we assume apps are chronological, find is fine or we can filter and take the latest)
-        // Here we just find the first application that matches the mobile number
-        const result = applications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).find(a => a.mobile === mobile);
-
+        const result = applications.find(a => a.mobile === mobile);
         if (result) {
-            setFoundApp(result);
+            setSelectedAppId(result.id);
             setError('');
         } else {
-            setFoundApp(null);
-            setError(`No application found for the mobile number "${mobile}". Please verify the number or contact support.`);
+            setError(`No application found for the mobile number "${mobile}"`);
         }
     };
 
     return (
-        <div className="max-w-xl mx-auto space-y-8 animate-in fade-in slide-in-from-top-4 duration-700">
-            <div className="text-center">
-                <h1 className="text-3xl font-bold text-[#003d82] dark:text-blue-400">Track Application</h1>
-                <p className="text-gray-500 dark:text-gray-400 mt-2">Check the real-time status of your loan request.</p>
-            </div>
+        <div className="min-h-screen bg-slate-50 py-6 px-6 font-sans">
+            <div className="max-w-2xl mx-auto space-y-6">
+                {!displayedApp && (
+                    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">
+                        <form onSubmit={handleSearch} className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-gray-400">Mobile Number</label>
+                                <div className="relative group">
+                                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-600 transition-colors" size={20} />
+                                    <input
+                                        type="tel"
+                                        className="w-full pl-14 pr-4 py-2.5 bg-slate-50 border border-gray-200 rounded-lg text-sm text-gray-900 outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-100 transition-all placeholder:text-gray-400"
+                                        placeholder="Enter 10-digit number"
+                                        value={mobile}
+                                        onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <button type="submit" className="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] hover:bg-blue-700 hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] transition-all">
+                                Search Application
+                            </button>
+                        </form>
 
-            <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-slate-700">
-                <form onSubmit={handleSearch} className="space-y-5">
-                    <div>
-                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 block mb-2 font-serif">Registered Mobile Number</label>
-                        <input
-                            type="tel"
-                            className="w-full p-4 bg-gray-50 dark:bg-slate-700 dark:text-white border border-gray-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all tracking-widest font-bold"
-                            placeholder="Enter 10-digit mobile"
-                            value={mobile}
-                            onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                            required
-                        />
-                    </div>
-                    <button type="submit" className="w-full bg-[#003d82] hover:bg-blue-800 text-white py-4 rounded-xl font-bold transition-all shadow-lg transform active:scale-[0.98]">
-                        Securely Track Application Status
-                    </button>
-                </form>
-
-                {error && (
-                    <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl flex items-center space-x-3 text-red-600 dark:text-red-400 animate-pulse">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                        <p className="text-sm font-bold">{error}</p>
+                        {error && (
+                            <div className="mt-6 p-3 bg-red-50 border border-red-100 rounded-lg flex items-center gap-3 text-red-500">
+                                <AlertCircle size={16} />
+                                <p className="text-sm">{error}</p>
+                            </div>
+                        )}
                     </div>
                 )}
-            </div>
 
-            {foundApp && (
-                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-100 dark:border-slate-700 animate-in zoom-in-95 duration-500">
-                    <div className="bg-[#003d82] dark:bg-slate-900 p-6 text-white flex justify-between items-center">
-                        <div>
-                            <p className="text-xs uppercase tracking-widest font-bold opacity-60">Application ID</p>
-                            <h2 className="text-2xl font-mono font-black">{foundApp.id.toUpperCase()}</h2>
-                        </div>
-                        <div className={`px-4 py-2 rounded-full font-black text-sm ${foundApp.status === 'APPROVED' ? 'bg-green-500 shadow-lg shadow-green-900/20' :
-                            foundApp.status === 'REJECTED' ? 'bg-red-500 shadow-lg shadow-red-900/20' :
-                                'bg-yellow-500 shadow-lg shadow-yellow-900/20'
+                {userApps.length > 1 && (
+                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide py-2">
+                         {userApps.map(app => (
+                             <button 
+                                key={app.id} 
+                                onClick={() => setSelectedAppId(app.id)}
+                                className={`px-4 py-2 rounded-lg border whitespace-nowrap text-xs font-medium transition-all duration-200 ${selectedAppId === app.id || (!selectedAppId && userApps[0].id === app.id) ? 'bg-blue-600 border-blue-600 text-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]' : 'bg-white border-gray-200 text-gray-600 hover:border-blue-600'}`}
+                             >
+                                #{app.id.substring(10)} - {app.status}
+                             </button>
+                         ))}
+                    </div>
+                )}
+
+                {displayedApp && (
+                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">
+                        <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <p className="text-xs font-medium text-gray-400 mb-1">Application ID</p>
+                                <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">#{displayedApp.id.toUpperCase()}</h2>
+                            </div>
+                            <div className={`px-5 py-1.5 rounded-full text-[11px] font-medium border ${
+                                displayedApp.status === 'APPROVED' ? 'bg-green-50 border-green-100 text-green-600' :
+                                displayedApp.status === 'REJECTED' ? 'bg-red-50 border-red-100 text-red-600' :
+                                'bg-blue-50 border-blue-100 text-blue-600'
                             }`}>
-                            {foundApp.status}
-                        </div>
-                    </div>
-
-                    <div className="p-8 space-y-6">
-                        <div className="grid grid-cols-2 gap-8">
-                            <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Applicant</p>
-                                <p className="text-lg font-bold text-gray-800 dark:text-gray-100">{foundApp.fullName}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Submitted On</p>
-                                <p className="text-lg font-bold text-gray-800 dark:text-gray-100">{new Date(foundApp.createdAt).toLocaleDateString()}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Loan Amount</p>
-                                <p className="text-xl font-black text-[#003d82] dark:text-blue-400">₹{foundApp.loanAmount.toLocaleString()}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">AI Score</p>
-                                <p className="text-xl font-black text-gray-800 dark:text-gray-100">{foundApp.aiCreditworthiness}</p>
+                                {displayedApp.status.charAt(0) + displayedApp.status.slice(1).toLowerCase()}
                             </div>
                         </div>
 
-                        {/* New block for AI Reasoning and Analysis */}
-                        <div className="space-y-4">
-                            <div>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                                    AI Decision Basis
-                                </p>
-                                <div className="space-y-1 bg-gray-50 dark:bg-slate-900/50 p-4 rounded-xl border dark:border-slate-700 shadow-sm leading-relaxed">
-                                    {Array.isArray(foundApp.aiReasoning) ? (
-                                        foundApp.aiReasoning.map((reason, idx) => (
-                                            <p key={idx} className="text-xs text-gray-700 dark:text-gray-300 font-medium">{reason}</p>
-                                        ))
-                                    ) : (
-                                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{foundApp.aiReasoning || "Decision pending final manual review."}"</p>
-                                    )}
-                                </div>
+                        <div className="p-6 space-y-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <TrackItem label="Applicant Name" value={displayedApp.fullName} />
+                                <TrackItem label="Applied On" value={new Date(displayedApp.createdAt).toLocaleDateString()} />
+                                <TrackItem label="Loan Amount" value={`₹${Number(displayedApp.loanAmount).toLocaleString()}`} highlight />
+                                <TrackItem label="Tenure" value={`${displayedApp.tenure} months`} />
                             </div>
 
-                            {foundApp.status === 'REJECTED' && foundApp.recommendations && foundApp.recommendations.length > 0 && (
-                                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/50">
-                                    <h4 className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-2">Personalized Recommendations</h4>
-                                    <ul className="space-y-1">
-                                        {foundApp.recommendations.map((rec, idx) => (
-                                            <li key={idx} className="text-[11px] text-blue-800 dark:text-blue-200 font-bold flex items-start">
-                                                <span className="mr-2">💡</span> {rec}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-
-                            {foundApp.status === 'APPROVED' ? (
-                                <div className="p-5 bg-green-50 dark:bg-green-900/20 rounded-xl border-2 border-green-200 dark:border-green-800/50">
-                                    <h3 className="text-green-800 dark:text-green-400 font-black text-lg mb-1">Next Steps</h3>
-                                    <p className="text-sm text-green-700 dark:text-green-300">Congratulations! Our bank official will contact you within 24 hours for final documentation.</p>
-                                </div>
-                            ) : foundApp.status === 'REJECTED' ? (
-                                <div className="p-5 bg-red-50 dark:bg-red-900/20 rounded-xl border-2 border-red-200 dark:border-red-800/50">
-                                    <h3 className="font-black text-lg mb-1 text-red-800 dark:text-red-400">Formal Status: Rejected</h3>
-                                    <p className="text-sm italic font-medium text-red-700 dark:text-red-300">
-                                        "{foundApp.bankerRemark || "Your application did not meet the minimum eligibility criteria at this time."}"
+                            <div className="space-y-4 pt-6 border-t border-gray-200">
+                                <div className="bg-slate-50 rounded-xl p-5 border border-gray-200">
+                                    <h4 className="text-xs font-medium text-gray-400 mb-3 flex items-center">
+                                        <History size={14} className="mr-2 text-blue-600" />
+                                        AI Assessment
+                                    </h4>
+                                    <p className="text-sm font-medium text-gray-600 leading-relaxed pl-6 border-l-2 border-blue-100">
+                                        {displayedApp.recommendation || displayedApp.reviewReason || "Our institutional risk engine is currently refining your profile parameters."}
                                     </p>
                                 </div>
-                            ) : (
-                                <div className="p-5 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border-2 border-yellow-200 dark:border-yellow-800/50">
-                                    <h3 className="font-black text-lg mb-1 text-yellow-800 dark:text-yellow-400">Status: Pending Review</h3>
-                                    <p className="text-sm italic font-medium text-yellow-700 dark:text-yellow-300">
-                                        "Your application is currently being analyzed by our AI risk engine and a manual review by an officer."
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="pt-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between opacity-50">
-                            <div className="flex space-x-2">
-                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                <span className="text-[10px] font-bold uppercase tracking-widest">RSA Secure</span>
+                                <StatusNotification status={displayedApp.status} remark={displayedApp.bankerRemark} />
                             </div>
-                            <button className="text-[10px] font-bold uppercase tracking-widest hover:underline">Download Receipt</button>
                         </div>
                     </div>
+                )}
+                
+                <div className="text-center pt-8">
+                     <p className="text-xs text-gray-400">
+                        © 2026 HDFC Bank Ltd. All rights reserved.
+                     </p>
                 </div>
-            )}
+            </div>
+        </div>
+    );
+};
+
+const TrackItem = ({ label, value, highlight }) => (
+    <div className="group">
+        <p className="text-xs font-medium text-gray-400 mb-2 transition-colors">{label}</p>
+        <p className={`text-lg font-semibold tracking-tight ${highlight ? 'text-blue-600' : 'text-gray-900'}`}>{value}</p>
+    </div>
+);
+
+const StatusNotification = ({ status, remark }) => {
+    if (status === 'APPROVED') return (
+        <div className="p-5 bg-green-50 border border-green-100 rounded-xl flex items-start gap-4">
+            <div className="w-10 h-10 bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] flex items-center justify-center text-green-600">
+                <CheckCircle2 size={20} />
+            </div>
+            <div>
+                <h4 className="text-sm font-medium text-green-600">Application Approved</h4>
+                <p className="text-sm text-gray-600 mt-1 leading-relaxed">Your loan has been approved. Our disbursement team will contact you shortly.</p>
+            </div>
+        </div>
+    );
+    
+    if (status === 'REJECTED') return (
+        <div className="p-5 bg-red-50 border border-red-100 rounded-xl flex items-start gap-4">
+            <div className="w-10 h-10 bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] flex items-center justify-center text-red-600">
+                <AlertCircle size={20} />
+            </div>
+            <div>
+                <h4 className="text-sm font-medium text-red-500">Application Declined</h4>
+                <p className="text-sm text-gray-600 mt-1 leading-relaxed">{remark || "Your application did not meet the current lending criteria."}</p>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="p-5 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-4">
+            <div className="w-10 h-10 bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] flex items-center justify-center text-blue-600">
+                <Clock size={20} />
+            </div>
+            <div>
+                <h4 className="text-sm font-medium text-blue-600">Under Review</h4>
+                <p className="text-sm text-gray-600 mt-1 leading-relaxed">Our team is reviewing your application. Expected response time: <span className="font-medium text-gray-900">4-6 hours</span>.</p>
+            </div>
         </div>
     );
 };

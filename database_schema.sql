@@ -2,8 +2,8 @@
 -- Database Schema (MySQL)
 -- Version: 1.0 (RBAC & Audit Compliant)
 
-CREATE DATABASE IF NOT EXISTS hdfc_loan_system;
-USE hdfc_loan_system;
+CREATE DATABASE IF NOT EXISTS AiHdfcLoanApproval;
+USE AiHdfcLoanApproval;
 
 -- 1. Users Table (Identity & RBAC)
 CREATE TABLE users (
@@ -21,7 +21,7 @@ CREATE TABLE users (
 -- 2. Loan Applications Table (Core Data + AI Insights)
 CREATE TABLE applications (
     id VARCHAR(50) PRIMARY KEY,
-    applicant_id INT,
+    applicant_id BIGINT COMMENT 'Support for large numeric identifier chains',
     
     -- Applicant Profile Data
     full_name VARCHAR(150) NOT NULL,

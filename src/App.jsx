@@ -345,7 +345,7 @@ const App = () => {
                                         />
                                         <Route
                                             path="/apply"
-                                            element={(!user || user.isGuest) ? <Navigate to="/login" replace /> : <ApplyLoan user={user} onSubmit={addApplication} />}
+                                            element={<ApplyLoan user={user} onSubmit={addApplication} />}
                                         />
                                         <Route path="/emi-calculator" element={<EMICalculator />} />
                                         <Route path="/check-eligibility" element={<EligibilityChecker />} />

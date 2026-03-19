@@ -64,7 +64,7 @@ const AdminLogin = ({ onLogin }) => {
                         <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">H</div>
                     </div>
 
-                    <h1 className="text-2xl font-semibold text-gray-900">Admin Login</h1>
+                    <h1 className="text-2xl font-semibold text-gray-900">Admin Sign In</h1>
                     <p className="text-sm text-gray-500 mt-2">System administrator access</p>
                 </div>
 

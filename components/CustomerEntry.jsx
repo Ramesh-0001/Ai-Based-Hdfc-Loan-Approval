@@ -23,18 +23,6 @@ const CustomerEntry = ({ onLogin }) => {
         }, 1200);
     };
 
-    const handleGuest = () => {
-        setLoading(true);
-        setTimeout(() => {
-            onLogin({
-                id: 999,
-                name: 'Guest Applicant',
-                role: 'APPLICANT',
-                isGuest: true
-            });
-            navigate('/dashboard');
-        }, 800);
-    };
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 font-sans">
@@ -52,7 +40,7 @@ const CustomerEntry = ({ onLogin }) => {
                         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">H</div>
                     </div>
 
-                    <h1 className="text-2xl font-semibold text-gray-900">Applicant Login</h1>
+                    <h1 className="text-2xl font-semibold text-gray-900">Applicant Sign In</h1>
                     <p className="text-sm text-gray-500 mt-2">Enter your details to continue</p>
                 </div>
 
@@ -91,21 +79,6 @@ const CustomerEntry = ({ onLogin }) => {
                                     <ArrowRight size={16} />
                                 </>
                             )}
-                        </button>
-
-                        <div className="relative py-4 flex items-center justify-center text-center">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-200"></div>
-                            </div>
-                            <span className="relative px-4 text-xs font-medium text-gray-400 bg-white uppercase">Or</span>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={handleGuest}
-                            className="w-full py-2.5 px-4 rounded-lg font-medium text-sm border border-gray-200 text-gray-500 hover:bg-slate-50 hover:text-gray-900 transition-all duration-200"
-                        >
-                            Continue as Guest
                         </button>
                     </form>
                 </div>

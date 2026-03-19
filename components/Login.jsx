@@ -42,7 +42,7 @@ const Login = ({ onLogin }) => {
                         <div className="w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">H</div>
                         <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1 rounded-lg">
                             <Lock size={12} className="text-blue-600" />
-                            <span className="text-xs font-medium text-blue-600">Secure Login</span>
+                            <span className="text-xs font-medium text-blue-600">Secure Sign In</span>
                         </div>
                     </div>
                     <h1 className="text-2xl font-semibold text-gray-900">Sign in to your account</h1>

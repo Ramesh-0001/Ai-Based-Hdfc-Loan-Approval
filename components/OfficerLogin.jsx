@@ -53,7 +53,7 @@ const OfficerLogin = ({ onLogin }) => {
                         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01]">H</div>
                     </div>
 
-                    <h1 className="text-2xl font-semibold text-gray-900">Officer Login</h1>
+                    <h1 className="text-2xl font-semibold text-gray-900">Officer Sign In</h1>
                     <p className="text-sm text-gray-500 mt-2">Bank officer authentication portal</p>
                 </div>
 

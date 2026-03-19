@@ -16,7 +16,8 @@ import {
   Award,
   Zap,
   Activity,
-  ChevronDown
+  ChevronDown,
+  ArrowRight
 } from 'lucide-react';
 import { API_BASE_URL } from '../src/config/api';
 
@@ -285,6 +286,37 @@ const ApplyLoan = ({ user, onSubmit, onFinish }) => {
               className="w-full bg-blue-600 text-white font-semibold py-3.5 rounded-xl hover:bg-blue-700 transition-all shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 hover:scale-[1.01] text-sm active:scale-95"
             >
               Continue to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!user || user.isGuest) {
+    return (
+      <div className="max-w-2xl mx-auto py-12 px-6 animate-in fade-in duration-700">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200">
+          <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Lock size={32} />
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Sign in Required</h2>
+          <p className="text-gray-500 mb-8 max-w-sm mx-auto">
+            To maintain institutional security and track your application progress, please sign in to your HDFC account before applying for a loan.
+          </p>
+          <div className="space-y-3">
+            <button 
+              onClick={() => navigate('/login')}
+              className="w-full bg-blue-600 text-white font-semibold py-3.5 rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
+            >
+              <span>Sign in to Continue</span>
+              <ArrowRight size={18} />
+            </button>
+            <button 
+              onClick={() => navigate('/')}
+              className="w-full bg-slate-50 text-gray-600 font-semibold py-3.5 rounded-xl hover:bg-slate-100 transition-all active:scale-95"
+            >
+              Return Home
             </button>
           </div>
         </div>

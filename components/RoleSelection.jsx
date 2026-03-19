@@ -79,7 +79,7 @@ const RoleSelection = ({ user }) => {
 
                             <div className="w-full mt-6 pt-4 border-t border-gray-200 flex items-center justify-between text-sm font-medium text-blue-600 transition-all group-hover:text-blue-700">
                                 <div className="flex items-center group-hover:translate-x-1 transition-transform duration-200">
-                                    <span>Continue to login</span>
+                                    <span>Continue to sign in</span>
                                     <ArrowRight size={14} className="ml-2" />
                                 </div>
                             </div>

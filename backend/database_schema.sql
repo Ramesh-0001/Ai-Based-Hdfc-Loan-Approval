@@ -151,19 +151,18 @@ INSERT INTO users (username, password_hash, full_name, role) VALUES
 
 -- 2. Insert a Sample Loan Application
 INSERT INTO applications (
-    applicant_id, loan_amount, income, credit_score, 
-    existing_emi, dependents, tenure, 
-    ai_risk_score, ai_risk_category, ai_recommendation, status
+    id, applicant_id, full_name, loan_amount, income, credit_score, 
+    existing_emis, dependents, tenure, 
+    ai_creditworthiness, risk_level, status
 ) VALUES (
-    4, -- Refers to Arun Kumar
-    2500000.00, 850000.00, 780, 
+    'HDFC-INIT-001', 4, 'Arun Kumar', 2500000.00, 850000.00, 780, 
     15000.00, 2, 240,
-    15.5, 'Low', 'APPROVE', 'APPROVED'
+    85, 'Low', 'APPROVED'
 );
 
 -- 3. Log the Decision in History (Audit Trail)
 INSERT INTO application_history (application_id, officer_id, action, rejection_reason)
-VALUES (1, 2, 'APPROVED', 'Strong financial profile and high credit score');
+VALUES ('HDFC-INIT-001', 2, 'APPROVED', 'Strong financial profile and high credit score');
 
 -- 4. Add a System Notification
 INSERT INTO notifications (user_id, message, is_read)

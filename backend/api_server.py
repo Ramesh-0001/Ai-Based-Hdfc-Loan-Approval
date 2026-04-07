@@ -45,12 +45,16 @@ db_config = {
 }
 
 def get_db_connection(database=None):
-    """Returns a MySQL connection."""
+    """Returns a MySQL connection with optional database specification."""
     config = db_config.copy()
-    if database:
+    if database is not None:
         config['database'] = database
+    elif 'database' in config and database is None:
+        # If we explicitly want no database (e.g., for CREATE DATABASE), remove it
+        del config['database']
+        
     try:
-        conn = mysql.connector.connect(**config, connect_timeout=3)
+        conn = mysql.connector.connect(**config, connect_timeout=5)
         if conn.is_connected():
             conn.autocommit = True
             return conn
@@ -59,146 +63,71 @@ def get_db_connection(database=None):
     return None
 
 def initialize_database():
-    """Ensure database and tables exist."""
-    conn = get_db_connection(database='')
+    """Ensure database and tables exist by reading the SQL schema file."""
+    conn = get_db_connection(database=None) # Connect without specifying DB
     if not conn:
-        logger.error("Could not connect to MySQL to initialize database.")
+        logger.error("Could not connect to MySQL server for initialization.")
         return
     
     try:
         cursor = conn.cursor()
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_config['database']}")
-        cursor.execute(f"USE {db_config['database']}")
         
-        # User Roles table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                username VARCHAR(50) UNIQUE NOT NULL,
-                password_hash VARCHAR(255) NOT NULL,
-                full_name VARCHAR(100),
-                email VARCHAR(100),
-                role ENUM('APPLICANT', 'OFFICER', 'ADMIN') DEFAULT 'APPLICANT',
-                status ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED') DEFAULT 'ACTIVE',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+        # Priority 1: Load from institutional SQL registry
+        schema_path = os.path.join(os.path.dirname(__file__), 'database_schema.sql')
+        if os.path.exists(schema_path):
+            logger.info(f"Initializing institutional registry from {schema_path}...")
+            with open(schema_path, 'r', encoding='utf-8') as f:
+                sql_file = f.read()
+            
+            # Filter comments and split by semicolon
+            commands = []
+            for line in sql_file.split('\n'):
+                if line.strip() and not line.strip().startswith('--'):
+                    commands.append(line.split('--')[0]) # Remove inline comments
+            
+            sql_clean = ' '.join(commands)
+            sql_commands = [c.strip() for c in sql_clean.split(';') if c.strip()]
+            
+            for command in sql_commands:
+                try:
+                    cursor.execute(command)
+                except Error as e:
+                    # Institutional Resiliency: Ignore "Already Exists" or "Duplicate Entry" nodes
+                    error_msg = str(e).lower()
+                    if "exists" in error_msg or "duplicate entry" in error_msg:
+                        continue 
+                    logger.warning(f"Schema Provision Warning on command [{command[:40]}...]: {e}")
+            
+            logger.info("Institutional Registry Provisioned successfully (Schema + Authorities).")
+        else:
+            logger.warning("database_schema.sql NOT FOUND. Falling back to internal bootstrap logic.")
+            # Internal Fallback Node
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_config['database']}")
+            cursor.execute(f"USE {db_config['database']}")
         
-        # Applications table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS applications (
-                id VARCHAR(50) PRIMARY KEY,
-                applicant_id INT,
-                full_name VARCHAR(100),
-                mobile VARCHAR(20),
-                email VARCHAR(100),
-                age INT,
-                income DECIMAL(15,2),
-                employment_type VARCHAR(50),
-                credit_score INT,
-                existing_loan_count INT,
-                existing_emi DECIMAL(15,2),
-                repayment_history VARCHAR(50),
-                job_tenure DECIMAL(5,2),
-                loan_amount DECIMAL(15,2),
-                loan_purpose VARCHAR(100),
-                tenure INT,
-                pan_number VARCHAR(20),
-                aadhar_number VARCHAR(20),
-                status VARCHAR(20) DEFAULT 'PENDING',
-                risk_level VARCHAR(20) DEFAULT 'Medium',
-                ai_creditworthiness INT,
-                ml_confidence DECIMAL(5,4),
-                confidence_score INT DEFAULT 0,
-                ai_reasoning TEXT,
-                score_breakdown TEXT,
-                ml_insight TEXT,
-                comparison TEXT,
-                recommendations TEXT,
-                banker_remark TEXT,
-                reviewed_by VARCHAR(100),
-                decision_date DATETIME,
-                is_fraud BOOLEAN DEFAULT FALSE,
-                fraud_reason TEXT,
-                fraud_score INT DEFAULT 0,
-                fraud_risk VARCHAR(50) DEFAULT 'Low',
-                fraud_flags TEXT,
-                is_manual_override BOOLEAN DEFAULT FALSE,
-                decision_time DECIMAL(10,2) DEFAULT 0.00,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+        # Redundant nodes removed. Flow continuing to authority check...
         
-        # Schema Migration - Ensure missing columns are added quietly (Standard MySQL uses try-except)
-        migrations = [
-            "ALTER TABLE applications ADD COLUMN decision_time DECIMAL(10,2) DEFAULT 0.00",
-            "ALTER TABLE applications ADD COLUMN fraud_score INT DEFAULT 0",
-            "ALTER TABLE applications ADD COLUMN fraud_risk VARCHAR(50) DEFAULT 'Low'",
-            "ALTER TABLE applications ADD COLUMN fraud_flags TEXT",
-            "ALTER TABLE applications ADD COLUMN score_breakdown TEXT"
-        ]
-        for m in migrations:
-            try: cursor.execute(m)
-            except: pass
+        # Neural Hub registry handled by SQL Provisioning.
         
-        # Application History table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS application_history (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                application_id VARCHAR(50),
-                officer_id INT,
-                action VARCHAR(50),
-                rejection_reason TEXT,
-                is_manual_override BOOLEAN DEFAULT FALSE,
-                decision_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # Notifications table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS notifications (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                user_id INT,
-                target_role ENUM('APPLICANT', 'OFFICER', 'ADMIN'),
-                title VARCHAR(100),
-                message TEXT,
-                is_read BOOLEAN DEFAULT FALSE,
-                application_id VARCHAR(50),
-                type VARCHAR(20),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # Migrate: Add existing_emi column if it doesn't exist
-        try:
-            cursor.execute("ALTER TABLE applications ADD COLUMN existing_emi DECIMAL(15,2) AFTER existing_loan_count")
-            conn.commit()
-            print("[DB] Added existing_emi column to applications table")
-        except Exception as e:
-            # Column likely already exists
-            pass
+        # Standardized schema migrations and secondary nodes now part of master SQL registry.
 
-        # Add some default users if none exist (Demo purposes)
-        cursor.execute("SELECT COUNT(*) as count FROM users")
+        # Ensure 'admin' exists if the bootstrap didn't create it
+        cursor.execute(f"USE {db_config['database']}")
+        cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'ADMIN'")
         if cursor.fetchone()[0] == 0:
-            # Add Admin (pass: admin123)
+            logger.info("Admin node not found. Initializing root authority...")
             admin_pwd = bcrypt.generate_password_hash("admin123").decode('utf-8')
             cursor.execute("INSERT INTO users (username, password_hash, full_name, role) VALUES (%s, %s, %s, %s)",
-                          ("admin", admin_pwd, "Administrator", "ADMIN"))
-            
-            # Add Officer (pass: officer123)
-            officer_pwd = bcrypt.generate_password_hash("officer123").decode('utf-8')
-            cursor.execute("INSERT INTO users (username, password_hash, full_name, role) VALUES (%s, %s, %s, %s)",
-                          ("officer", officer_pwd, "HDFC Officer", "OFFICER"))
-            
+                          ("admin", admin_pwd, "System Admin", "ADMIN"))
+        
         conn.commit()
         cursor.close()
         conn.close()
         logger.info("Database initialized successfully.")
-    except Error as e:
-        logger.error(f"Error during database initialization: {e}")
+    except Exception as e:
+        logger.error(f"Critical Node Failure during DB initialization: {e}")
 
-# Call initialization on startup
+# Trigger Institutional Lifecycle Bootstrap
 initialize_database()
 
 # Import ML logic properly

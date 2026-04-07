@@ -1,7 +1,11 @@
-"""Simulate a real frontend upload to catch the exact 500 error."""
+import os
+from dotenv import load_dotenv
 import requests
 
-url = "http://localhost:5001/api/documents/upload"
+load_dotenv()
+
+BASE_URL = os.getenv('API_URL', 'http://localhost:5001')
+url = f"{BASE_URL}/api/documents/upload"
 
 # Create a dummy file
 with open("test_upload.txt", "w") as f:
@@ -24,5 +28,4 @@ with open("test_upload.txt", "rb") as f:
     print(f"\nStatus: {resp.status_code}")
     print(f"Response: {resp.text}")
 
-import os
 os.remove("test_upload.txt")

@@ -1,5 +1,8 @@
+from dotenv import load_dotenv
 import os
 import re
+
+load_dotenv()
 
 def process_file(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:

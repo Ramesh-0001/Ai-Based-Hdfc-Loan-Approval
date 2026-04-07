@@ -1,11 +1,15 @@
+import os
+from dotenv import load_dotenv
 import mysql.connector
 import json
 
+load_dotenv()
+
 conn = mysql.connector.connect(
-    host='localhost',
-    user='root',
-    password='1234',
-    database='AiHdfcLoanApproval'
+    host=os.getenv('DB_HOST', 'localhost'),
+    user=os.getenv('DB_USER', 'root'),
+    password=os.getenv('DB_PASSWORD', '1234'),
+    database=os.getenv('DB_NAME', 'AiHdfcLoanApproval')
 )
 cursor = conn.cursor()
 

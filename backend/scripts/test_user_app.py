@@ -1,5 +1,11 @@
+import os
+from dotenv import load_dotenv
 import requests
 import json
+
+load_dotenv()
+
+BASE_URL = os.getenv('API_URL', 'http://localhost:5001')
 
 data = {
     'fullName': 'dsk',
@@ -22,7 +28,7 @@ data = {
 }
 
 try:
-    r = requests.post('http://localhost:5001/api/predict-loan', json=data)
+    r = requests.post(f'{BASE_URL}/api/predict-loan', json=data)
     print(json.dumps(r.json(), indent=2))
 except Exception as e:
     print(f"Error: {e}")

@@ -8,9 +8,9 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, 
   CartesianGrid, Tooltip, PieChart, Pie, Cell
 } from 'recharts';
+import { API_BASE_URL } from '../src/config/api';
 
 const Dashboard = () => {
-    const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);

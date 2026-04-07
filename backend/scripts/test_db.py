@@ -1,8 +1,17 @@
+import os
+from dotenv import load_dotenv
 import mysql.connector
 import json
 
+load_dotenv()
+
 try:
-    conn = mysql.connector.connect(host='localhost', user='root', password='1234', database='AiHdfcLoanApproval')
+    conn = mysql.connector.connect(
+    host=os.getenv('DB_HOST', 'localhost'),
+    user=os.getenv('DB_USER', 'root'),
+    password=os.getenv('DB_PASSWORD', '1234'),
+    database=os.getenv('DB_NAME', 'AiHdfcLoanApproval')
+)
     cursor = conn.cursor(dictionary=True)
     cursor.execute('SELECT full_name, ml_insight FROM applications ORDER BY created_at DESC LIMIT 1')
     row = cursor.fetchone()

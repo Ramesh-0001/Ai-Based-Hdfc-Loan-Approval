@@ -1,9 +1,18 @@
+import os
+from dotenv import load_dotenv
 import mysql.connector
 from mysql.connector import Error
 
+load_dotenv()
+
 def add_col():
     try:
-        conn = mysql.connector.connect(host='127.0.0.1', user='root', password='1234', database='AiHdfcLoanApproval')
+        conn = mysql.connector.connect(
+    host=os.getenv('DB_HOST', 'localhost'),
+    user=os.getenv('DB_USER', 'root'),
+    password=os.getenv('DB_PASSWORD', '1234'),
+    database=os.getenv('DB_NAME', 'AiHdfcLoanApproval')
+)
         cursor = conn.cursor()
         try:
             cursor.execute("ALTER TABLE applications ADD COLUMN audit_facts TEXT")

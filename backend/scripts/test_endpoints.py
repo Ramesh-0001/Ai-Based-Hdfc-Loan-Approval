@@ -1,9 +1,15 @@
+import os
+from dotenv import load_dotenv
 import requests
 
+load_dotenv()
+
+BASE_URL = os.getenv('API_URL', 'http://localhost:5001')
+
 urls = [
-    'http://localhost:5001/',
-    'http://localhost:5001/api/dashboard-stats',
-    'http://localhost:5001/api/applications'
+    f'{BASE_URL}/',
+    f'{BASE_URL}/api/dashboard-stats',
+    f'{BASE_URL}/api/applications'
 ]
 
 for url in urls:

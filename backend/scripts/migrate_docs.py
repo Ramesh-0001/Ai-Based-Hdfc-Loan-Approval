@@ -1,9 +1,17 @@
+import os
+from dotenv import load_dotenv
 import mysql.connector
 from mysql.connector import Error
 
+load_dotenv()
+
 def migrate_docs():
     try:
-        conn = mysql.connector.connect(host='127.0.0.1', user='root', password='1234')
+        conn = mysql.connector.connect(
+    host=os.getenv('DB_HOST', 'localhost'),
+    user=os.getenv('DB_USER', 'root'),
+    password=os.getenv('DB_PASSWORD', '1234')
+)
         cursor = conn.cursor(dictionary=True)
         
         # Check if source exists

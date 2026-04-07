@@ -1,12 +1,18 @@
+import os
+from dotenv import load_dotenv
 import requests
 import json
+
+load_dotenv()
+
+BASE_URL = os.getenv('API_URL', 'http://localhost:5001')
 
 # Test 1: Health Check
 print("=" * 60)
 print("TEST 1: Health Check")
 print("=" * 60)
 try:
-    response = requests.get('http://localhost:5001/api/health')
+    response = requests.get(f'{BASE_URL}/api/health')
     print(f"Status Code: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
     print("[OK] Health check PASSED\n")
@@ -35,7 +41,7 @@ application = {
 
 try:
     response = requests.post(
-        'http://localhost:5001/api/predict-loan',
+        f'{BASE_URL}/api/predict-loan',
         json=application,
         headers={'Content-Type': 'application/json'}
     )

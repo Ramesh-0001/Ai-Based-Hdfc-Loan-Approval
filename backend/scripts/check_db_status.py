@@ -1,11 +1,14 @@
+from dotenv import load_dotenv
 import os
 import mysql.connector
 
+load_dotenv()
+
 db_config = {
-    'host':     'localhost', # Try localhost directly for host check
-    'user':     'root',
-    'password': '1234',
-    'database': 'hdfc_loan_system'
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', '1234'),
+    'database': os.getenv('DB_NAME', 'AiHdfcLoanApproval')
 }
 
 def check_db():

@@ -1,4 +1,8 @@
+import os
+from dotenv import load_dotenv
 import re
+
+load_dotenv()
 
 # We will apply definitive exact styling for sidebars so the user sees clear blue.
 # Active state: bg-blue-600 text-white

@@ -5,6 +5,10 @@ from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Request, Depends, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Import services
 from services.finance import FinanceService
@@ -134,4 +138,6 @@ async def financial_health(income: float, credit_score: int, existing_emis: floa
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv('FASTAPI_PORT', 8000))
+    host = os.getenv('SERVER_HOST', '0.0.0.0')
+    uvicorn.run(app, host=host, port=port)

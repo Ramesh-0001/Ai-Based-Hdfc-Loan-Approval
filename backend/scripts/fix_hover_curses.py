@@ -1,4 +1,8 @@
+import os
+from dotenv import load_dotenv
 import re
+
+load_dotenv()
 
 # 1. Update Admin Dashboard Sidebar
 def fix_admin_dashboard():

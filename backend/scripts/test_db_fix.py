@@ -1,8 +1,17 @@
+import os
+from dotenv import load_dotenv
 """Quick test: verify the fixed SQL works with actual DB columns."""
 import mysql.connector
 from datetime import datetime
 
-conn = mysql.connector.connect(host='localhost', user='root', password='1234', database='AiHdfcLoanApproval')
+load_dotenv()
+
+conn = mysql.connector.connect(
+    host=os.getenv('DB_HOST', 'localhost'),
+    user=os.getenv('DB_USER', 'root'),
+    password=os.getenv('DB_PASSWORD', '1234'),
+    database=os.getenv('DB_NAME', 'AiHdfcLoanApproval')
+)
 c = conn.cursor()
 
 # Test INSERT with correct columns using REAL user_id=1

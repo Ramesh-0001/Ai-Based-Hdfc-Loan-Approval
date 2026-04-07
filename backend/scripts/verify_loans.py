@@ -1,8 +1,12 @@
+import os
+from dotenv import load_dotenv
 
 import requests
 import json
 
-BASE_URL = "http://localhost:5001"
+load_dotenv()
+
+BASE_URL = os.getenv('API_URL', 'http://localhost:5001')
 
 def test_general_loan():
     print("\n--- Testing General Personal Loan Eligibility ---")

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, ChevronLeft, ArrowRight, Lock, Command } from 'lucide-react';
+import { API_BASE_URL } from '../src/config/api';
 
 const AdminLogin = ({ onLogin }) => {
     const [username, setUsername] = useState('');
@@ -10,7 +11,6 @@ const AdminLogin = ({ onLogin }) => {
     const [loading, setLoading] = useState(false);
     const [showOtp, setShowOtp] = useState(false);
     const navigate = useNavigate();
-    const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
     const handleInitialSubmit = (e) => {
         e.preventDefault();

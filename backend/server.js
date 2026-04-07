@@ -2,19 +2,27 @@ import express from 'express';
 import mysql from 'mysql2/promise';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
-const port = 5001;
+const port = process.env.NODE_PORT || 5002;
 
 app.use(cors());
 app.use(bodyParser.json());
 
 // Database configuration
 const dbConfig = {
-    host: 'localhost',
-    user: 'root',
-    password: '1234',
-    database: 'hdfc_loan_system'
+    host:     process.env.DB_HOST || 'localhost',
+    user:     process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '1234',
+    database: process.env.DB_NAME || 'hdfc_loan_system'
 };
 
 const pool = mysql.createPool(dbConfig);
@@ -147,7 +155,8 @@ app.post('/api/login/officer', async (req, res) => {
     const { empId, password } = req.body;
     try {
         const [rows] = await pool.query('SELECT * FROM users WHERE username = ? AND role = "OFFICER"', [empId]);
-        if (rows.length > 0 && (rows[0].password_hash === password || password === '1234')) {
+        const defaultPwd = process.env.OFFICER_PASSWORD || '1234';
+        if (rows.length > 0 && (rows[0].password_hash === password || password === defaultPwd)) {
             res.json({
                 success: true,
                 user: { id: rows[0].id, name: rows[0].full_name, role: 'OFFICER' }

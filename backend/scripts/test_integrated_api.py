@@ -1,9 +1,15 @@
+import os
+from dotenv import load_dotenv
 
 import requests
 import json
 
+load_dotenv()
+
+BASE_URL = os.getenv('API_URL', 'http://localhost:5001')
+
 def test_api():
-    url = "http://localhost:5001/api/predict-loan"
+    url = f"{BASE_URL}/api/predict-loan"
     headers = {"Content-Type": "application/json"}
     
     # Test a "low risk" fraud but "rejected" loan for recommendations

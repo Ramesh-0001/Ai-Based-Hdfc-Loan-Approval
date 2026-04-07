@@ -1,6 +1,18 @@
 import mysql.connector
+import os
+from dotenv import load_dotenv
 
-conn = mysql.connector.connect(host='localhost', user='root', password='1234', database='AiHdfcLoanApproval', connect_timeout=5)
+# Load environment variables
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../.env'))
+
+db_config = {
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', '1234'),
+    'database': os.getenv('DB_NAME', 'AiHdfcLoanApproval')
+}
+
+conn = mysql.connector.connect(**db_config, connect_timeout=5)
 c = conn.cursor()
 
 # 1. Users Table
@@ -94,13 +106,18 @@ CREATE TABLE IF NOT EXISTS application_history (
 print("Created: application_history")
 
 # 5. Insert default users (Updated as per user requirement)
+admin_pwd = os.getenv('ADMIN_PASSWORD', 'admin123')
+officer_pwd = os.getenv('OFFICER_PASSWORD', '1234')
+
 c.execute("DELETE FROM users WHERE username IN ('admin1', 'admin', 'rameshkannan', 'surendran')") # Clean up old defaults
 c.execute("""
 INSERT INTO users (username, password_hash, full_name, role) VALUES 
-('admin', 'admin123', 'System Administrator', 'ADMIN'),
-('rameshkannan', '1234', 'Ramesh Kannan', 'OFFICER'),
-('surendran', '1234', 'Surendran', 'OFFICER')
-""")
+(%s, %s, %s, 'ADMIN'),
+(%s, %s, %s, 'OFFICER'),
+(%s, %s, %s, 'OFFICER')
+""", ('admin', admin_pwd, 'System Administrator', 
+      'rameshkannan', officer_pwd, 'Ramesh Kannan', 
+      'surendran', officer_pwd, 'Surendran'))
 print("Inserted: default users")
 
 conn.commit()

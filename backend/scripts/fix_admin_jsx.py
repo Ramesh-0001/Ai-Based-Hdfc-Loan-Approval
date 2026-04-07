@@ -1,4 +1,8 @@
+import os
+from dotenv import load_dotenv
 import re
+
+load_dotenv()
 
 filepath = r"e:\VS-Code\HDFC-Ai-Loan-Predictor\components\AdminDashboard.jsx"
 with open(filepath, 'r', encoding='utf-8') as f:

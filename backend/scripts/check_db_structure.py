@@ -1,12 +1,16 @@
+import os
+from dotenv import load_dotenv
 import mysql.connector
+
+load_dotenv()
 
 try:
     conn = mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='1234',
-        database='hdfc_loan_system'
-    )
+    host=os.getenv('DB_HOST', 'localhost'),
+    user=os.getenv('DB_USER', 'root'),
+    password=os.getenv('DB_PASSWORD', '1234'),
+    database=os.getenv('DB_NAME', 'AiHdfcLoanApproval')
+)
     cursor = conn.cursor()
     cursor.execute('DESCRIBE applications')
     print(f"{'Field':<25} | {'Type':<15} | {'Null':<5} | {'Key':<5} | {'Default':<10}")

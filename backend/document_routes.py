@@ -25,6 +25,7 @@ import traceback
 import uuid
 from datetime import datetime
 import mysql.connector
+from dotenv import load_dotenv
 from services.ocr_service import OCRService
 from services.risk_engine import RiskEngine
 from flask import Blueprint, jsonify, request
@@ -32,6 +33,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
 # ─── Config ──────────────────────────────────────────────────────────────────
+load_dotenv()
 logger = logging.getLogger(__name__)
 
 documents_bp = Blueprint("documents", __name__, url_prefix="/api/documents")
@@ -57,10 +59,10 @@ ALLOWED_DOC_TYPES = {
 def get_db_connection():
     """Return a fresh MySQL connection."""
     return mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='1234',
-        database='AiHdfcLoanApproval'
+        host=os.getenv('DB_HOST', 'localhost'),
+        user=os.getenv('DB_USER', 'root'),
+        password=os.getenv('DB_PASSWORD', '1234'),
+        database=os.getenv('DB_NAME', 'AiHdfcLoanApproval')
     )
 
 def allowed_file(filename: str) -> bool:

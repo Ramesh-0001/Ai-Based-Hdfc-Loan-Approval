@@ -1,5 +1,8 @@
+from dotenv import load_dotenv
 import re
 import os
+
+load_dotenv()
 
 files_to_square = [
     r"e:\VS-Code\HDFC-Ai-Loan-Predictor\components\InstitutionalDashboard.jsx",

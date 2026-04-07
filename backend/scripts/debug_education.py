@@ -1,7 +1,12 @@
+import os
+from dotenv import load_dotenv
 import requests
 import json
 
-url = 'http://localhost:5001/api/predict-loan'
+load_dotenv()
+
+BASE_URL = os.getenv('API_URL', 'http://localhost:5001')
+url = f'{BASE_URL}/api/predict-loan'
 payload = {
     "fullName": "Education Test",
     "email": "edu@test.com",

@@ -12,6 +12,10 @@ import mysql.connector
 from mysql.connector import Error
 from flask_bcrypt import Bcrypt
 from werkzeug.exceptions import HTTPException
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Initialize Flask, CORS, and Bcrypt
 app = Flask(__name__)
@@ -38,10 +42,11 @@ logger.addHandler(_fh)
 
 # Database Configuration
 db_config = {
-    'host':     os.getenv('DB_HOST', '127.0.0.1'),
+    'host':     os.getenv('DB_HOST', 'localhost'),
     'user':     os.getenv('DB_USER', 'root'),
     'password': os.getenv('DB_PASSWORD', '1234'),
-    'database': os.getenv('DB_NAME', 'AiHdfcLoanApproval')
+    'database': os.getenv('DB_NAME', 'hdfc_loan_system'),
+    'port':     int(os.getenv('DB_PORT', 3306))
 }
 
 def get_db_connection(database=None):
@@ -116,7 +121,7 @@ def initialize_database():
         cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'ADMIN'")
         if cursor.fetchone()[0] == 0:
             logger.info("Admin node not found. Initializing root authority...")
-            admin_pwd = bcrypt.generate_password_hash("admin123").decode('utf-8')
+            admin_pwd = bcrypt.generate_password_hash(os.getenv('ADMIN_PASSWORD', 'admin123')).decode('utf-8')
             cursor.execute("INSERT INTO users (username, password_hash, full_name, role) VALUES (%s, %s, %s, %s)",
                           ("admin", admin_pwd, "System Admin", "ADMIN"))
         
@@ -1070,6 +1075,8 @@ def delete_admin_user(user_id):
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    logger.info("Starting Unified AI Backend Server on port 5001...")
+    port = int(os.getenv('FLASK_PORT', 5001))
+    host = os.getenv('SERVER_HOST', '0.0.0.0')
+    logger.info(f"Starting Unified AI Backend Server on {host}:{port}...")
     # Using 0.0.0.0 to be reachable from local network
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host=host, port=port, debug=True)

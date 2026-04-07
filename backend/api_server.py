@@ -14,8 +14,8 @@ from flask_bcrypt import Bcrypt
 from werkzeug.exceptions import HTTPException
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables (override cached system vars)
+load_dotenv(override=True)
 
 # Initialize Flask, CORS, and Bcrypt
 app = Flask(__name__)
@@ -49,14 +49,25 @@ db_config = {
     'port':     int(os.getenv('DB_PORT', 3306))
 }
 
-def get_db_connection(database=None):
+# Apply Aiven SSL Certificate Config strictly for cloud safety
+ca_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'ca.pem')
+if os.path.exists(ca_path):
+    db_config['ssl_ca'] = ca_path
+    db_config['ssl_verify_cert'] = True
+
+def get_db_connection(database="DEFAULT_PLACEHOLDER"):
     """Returns a MySQL connection with optional database specification."""
     config = db_config.copy()
-    if database is not None:
+    if database == "DEFAULT_PLACEHOLDER":
+        # Keep the database if it exists in db_config
+        pass
+    elif database is None:
+        # Explicitly remove database if None is passed (for CREATE DATABASE)
+        if 'database' in config:
+            del config['database']
+    else:
+        # Override with a specific database name
         config['database'] = database
-    elif 'database' in config and database is None:
-        # If we explicitly want no database (e.g., for CREATE DATABASE), remove it
-        del config['database']
         
     try:
         conn = mysql.connector.connect(**config, connect_timeout=5)
@@ -69,13 +80,27 @@ def get_db_connection(database=None):
 
 def initialize_database():
     """Ensure database and tables exist by reading the SQL schema file."""
-    conn = get_db_connection(database=None) # Connect without specifying DB
+    # Connect directly to the configured database
+    conn = get_db_connection(database=db_config['database'])
     if not conn:
-        logger.error("Could not connect to MySQL server for initialization.")
-        return
+        # If DB doesn't exist, try to connect without it and create it (fallback for local)
+        conn = get_db_connection(database=None)
+        if not conn:
+            logger.error("Could not connect to MySQL server for initialization.")
+            return
+        
+        try:
+            cursor = conn.cursor()
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_config['database']}")
+            cursor.execute(f"USE {db_config['database']}")
+            logger.info(f"Created/Selected database: {db_config['database']}")
+        except Error as e:
+            logger.error(f"Failed to create/select database: {e}")
+            return
     
     try:
         cursor = conn.cursor()
+        cursor.execute(f"USE {db_config['database']}")
         
         # Priority 1: Load from institutional SQL registry
         schema_path = os.path.join(os.path.dirname(__file__), 'database_schema.sql')
@@ -84,20 +109,31 @@ def initialize_database():
             with open(schema_path, 'r', encoding='utf-8') as f:
                 sql_file = f.read()
             
-            # Filter comments and split by semicolon
-            commands = []
-            for line in sql_file.split('\n'):
-                if line.strip() and not line.strip().startswith('--'):
-                    commands.append(line.split('--')[0]) # Remove inline comments
+            # Robust institutional SQL parser:
+            # Splits by semicolon while respecting comments and block-level syntax
+            import re
             
-            sql_clean = ' '.join(commands)
-            sql_commands = [c.strip() for c in sql_clean.split(';') if c.strip()]
+            # Remove multi-line comments /* ... */
+            sql_no_multiline = re.sub(r'/\*.*?\*/', '', sql_file, flags=re.DOTALL)
+            
+            # Split and clean commands
+            sql_commands = []
+            current_cmd = []
+            
+            for line in sql_no_multiline.split('\n'):
+                # Strip -- comments and trim
+                clean_line = line.split('--')[0].strip()
+                if clean_line:
+                    current_cmd.append(clean_line)
+                    if clean_line.endswith(';'):
+                        sql_commands.append(' '.join(current_cmd))
+                        current_cmd = []
             
             for command in sql_commands:
+                if not command.strip(): continue
                 try:
                     cursor.execute(command)
                 except Error as e:
-                    # Institutional Resiliency: Ignore "Already Exists" or "Duplicate Entry" nodes
                     error_msg = str(e).lower()
                     if "exists" in error_msg or "duplicate entry" in error_msg:
                         continue 
@@ -308,15 +344,20 @@ def login_officer():
     
     if user:
         is_valid = False
+        print(f"DEBUG: Found officer {emp_id} in DB. Hash format matched? {user['password_hash'].startswith(('$2b$', '$2a$'))}")
         if user['password_hash'].startswith(('$2b$', '$2a$')):
             is_valid = bcrypt.check_password_hash(user['password_hash'], password)
+            print(f"DEBUG: Hash verification result: {is_valid}")
         else:
             is_valid = user['password_hash'] == password
+            print(f"DEBUG: Plain-text fallback for officer: {is_valid}")
             
         if is_valid:
             cursor.close()
             conn.close()
             return jsonify({'success': True, 'user': {'id': user['id'], 'name': user['full_name'], 'role': 'OFFICER'}})
+    else:
+        print(f"DEBUG: No officer '{emp_id}' found in Aiven with matching role.")
             
     cursor.close()
     conn.close()
@@ -335,15 +376,20 @@ def login_admin():
     
     if user:
         is_valid = False
+        print(f"DEBUG: Found user {username} in DB. Password hash matches encrypted pattern? {user['password_hash'].startswith(('$2b$', '$2a$'))}")
         if user['password_hash'].startswith(('$2b$', '$2a$')):
             is_valid = bcrypt.check_password_hash(user['password_hash'], password)
+            print(f"DEBUG: Bcrypt verification result: {is_valid}")
         else:
             is_valid = user['password_hash'] == password
+            print(f"DEBUG: Plain-text fallback check result: {is_valid}")
             
         if is_valid:
             cursor.close()
             conn.close()
             return jsonify({'success': True, 'user': {'id': user['id'], 'name': user['full_name'], 'role': 'ADMIN'}})
+    else:
+        print(f"DEBUG: User {username} NOT found in Aiven database with role 'ADMIN'.")
             
     cursor.close()
     conn.close()

@@ -2,8 +2,8 @@
 -- Database Schema (MySQL)
 -- Version: 1.0 (RBAC & Audit Compliant)
 
-CREATE DATABASE IF NOT EXISTS AiHdfcLoanApproval;
-USE AiHdfcLoanApproval;
+-- Database creation and use removed for Cloud Compatibility (Aiven defaults)
+
 
 -- 1. Users Table (Identity & RBAC)
 CREATE TABLE users (

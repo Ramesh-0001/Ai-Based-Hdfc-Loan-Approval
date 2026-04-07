@@ -1,0 +1,21 @@
+﻿python : 2026-03-24 14:04:33,498 [INFO] package: mysql.connector.plugins
+At line:1 char:1
++ python api_server.py > server_log.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo              : NotSpecified: (2026-03    -24 14:0...nnector.plugi    ns:String) [], RemoteExc    eption
+    + FullyQualifiedErrorId     : NativeCommandError
+ 
+2026-03-24 14:04:33,499 [INFO] plugin_name: caching_sha2_password
+2026-03-24 14:04:33,499 [INFO] AUTHENTICATION_PLUGIN_CLASS: MySQLCachingSHA2PasswordAuthPlugin
+2026-03-24 14:04:33,680 [INFO] Database initialized successfully.
+2026-03-24 14:04:34,770 [INFO] ML Engines loaded successfully.
+2026-03-24 14:04:34,775 [INFO] Starting AI Backend Server on port 5001...
+[OK] Model artifacts loaded successfully
+ * Serving Flask app 'api_server'
+ * Debug mode: on
+2026-03-24 14:04:34,797 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://10.130.20.234:5001
+2026-03-24 14:04:34,797 [INFO] [33mPress CTRL+C to quit[0m
+2026-03-24 14:04:34,798 [INFO]  * Restarting with stat

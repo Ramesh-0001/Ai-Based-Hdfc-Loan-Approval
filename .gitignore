@@ -1,21 +1,49 @@
-# Logs
-logs
-*.log
+# ─── Frontend (Node.js/Vite) ───
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# ─── Backend (Python/Flask) ───
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/venv/
+backend/.venv/
+venv/
+.venv/
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+
+# ─── App Data & Uploads ───
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/scripts/*.log
+
+# ─── Environment Files ───
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 *.local
 
-# Editor directories and files
+# ─── General Logs ───
+logs
+*.log
+
+# ─── Editor & OS Files ───
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
